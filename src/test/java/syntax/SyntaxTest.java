@@ -1,12 +1,13 @@
-package rome77;
+package syntax;
 
 import org.junit.jupiter.api.Test;
+import parsing.ParsingException;
 import rome77.antlr.Rome77Syntax;
-import syntax.SyntaxNode;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * Tests for Rome77 grammar parsing.
@@ -17,124 +18,124 @@ import static org.hamcrest.Matchers.is;
 final class SyntaxTest {
 
     @Test
-    void parsesEmptyProgramWithZeroStatements() {
+    void parsesEmptyProgramWithZeroStatements() throws ParsingException {
         assertThat(
             "Empty program should have no statement children",
-            this.childCount(new Rome77Syntax("").parsed().right().get().root()),
+            this.childCount(new Rome77Syntax("").parsed().root()),
             is(equalTo(1))
         );
     }
 
     @Test
-    void parsesRomanNumeralXIV() {
+    void parsesRomanNumeralXIV() throws ParsingException {
         assertThat(
             "Roman numeral XIV should be parsed",
-            this.findText(new Rome77Syntax("Grafo XIV").parsed().right().get().root(), "XIV"),
+            this.findText(new Rome77Syntax("Grafo XIV").parsed().root(), "XIV"),
             is(true)
         );
     }
 
     @Test
-    void parsesZeroAsN() {
+    void parsesZeroAsN() throws ParsingException {
         assertThat(
             "Zero represented as N should be parsed",
-            this.findText(new Rome77Syntax("Grafo N").parsed().right().get().root(), "N"),
+            this.findText(new Rome77Syntax("Grafo N").parsed().root(), "N"),
             is(true)
         );
     }
 
     @Test
-    void parsesVariableDeclaration() {
+    void parsesVariableDeclaration() throws ParsingException {
         assertThat(
             "Variable declaration should produce variableDecl node",
-            this.findName(new Rome77Syntax("As x = V").parsed().right().get().root(), "variableDecl"),
+            this.findName(new Rome77Syntax("As x = V").parsed().root(), "variableDecl"),
             is(true)
         );
     }
 
     @Test
-    void parsesFunctionDefinitionWithOneParameter() {
+    void parsesFunctionDefinitionWithOneParameter() throws ParsingException {
         assertThat(
             "Function definition should produce functionDef node",
-            this.findName(new Rome77Syntax("Munus f x = x").parsed().right().get().root(), "functionDef"),
+            this.findName(new Rome77Syntax("Munus f x = x").parsed().root(), "functionDef"),
             is(true)
         );
     }
 
     @Test
-    void parsesFunctionDefinitionWithTwoParameters() {
+    void parsesFunctionDefinitionWithTwoParameters() throws ParsingException {
         assertThat(
             "Function with two parameters should be parsed",
-            this.findName(new Rome77Syntax("Munus sum a b = a + b").parsed().right().get().root(), "functionDef"),
+            this.findName(new Rome77Syntax("Munus sum a b = a + b").parsed().root(), "functionDef"),
             is(true)
         );
     }
 
     @Test
-    void parsesOutputStatement() {
+    void parsesOutputStatement() throws ParsingException {
         assertThat(
             "Output statement should produce outputStmt node",
-            this.findName(new Rome77Syntax("Grafo x").parsed().right().get().root(), "outputStmt"),
+            this.findName(new Rome77Syntax("Grafo x").parsed().root(), "outputStmt"),
             is(true)
         );
     }
 
     @Test
-    void parsesAdditionOperator() {
+    void parsesAdditionOperator() throws ParsingException {
         assertThat(
             "Addition operator should be parsed",
-            this.findText(new Rome77Syntax("Grafo a + b").parsed().right().get().root(), "+"),
+            this.findText(new Rome77Syntax("Grafo a + b").parsed().root(), "+"),
             is(true)
         );
     }
 
     @Test
-    void parsesSubtractionOperator() {
+    void parsesSubtractionOperator() throws ParsingException {
         assertThat(
             "Subtraction operator should be parsed",
-            this.findText(new Rome77Syntax("Grafo a - I").parsed().right().get().root(), "-"),
+            this.findText(new Rome77Syntax("Grafo a - I").parsed().root(), "-"),
             is(true)
         );
     }
 
     @Test
-    void parsesMultiplicationOperator() {
+    void parsesMultiplicationOperator() throws ParsingException {
         assertThat(
             "Multiplication operator should be parsed",
-            this.findText(new Rome77Syntax("Grafo a * II").parsed().right().get().root(), "*"),
+            this.findText(new Rome77Syntax("Grafo a * II").parsed().root(), "*"),
             is(true)
         );
     }
 
     @Test
-    void parsesDivisionOperator() {
+    void parsesDivisionOperator() throws ParsingException {
         assertThat(
             "Division operator should be parsed",
-            this.findText(new Rome77Syntax("Grafo a / II").parsed().right().get().root(), "/"),
+            this.findText(new Rome77Syntax("Grafo a / II").parsed().root(), "/"),
             is(true)
         );
     }
 
     @Test
-    void parsesSinonConditional() {
+    void parsesSinonConditional() throws ParsingException {
         assertThat(
             "Sinon conditional should produce conditional node",
-            this.findName(new Rome77Syntax("Grafo Sinon n I II").parsed().right().get().root(), "conditional"),
+            this.findName(new Rome77Syntax("Grafo Sinon n I II").parsed().root(), "conditional"),
             is(true)
         );
     }
 
     @Test
-    void parsesFunctionCall() {
+    void parsesFunctionCall() throws ParsingException {
         assertThat(
             "Function call should produce funcCall node",
-            this.findName(new Rome77Syntax("Grafo fib n").parsed().right().get().root(), "funcCall"),
+            this.findName(new Rome77Syntax("Grafo fib n").parsed().root(), "funcCall"),
             is(true)
         );
     }
 
     @Test
-    void parsesFibonacciProgram() {
+    void parsesFibonacciProgram() throws ParsingException {
         final String code = String.join(
             "\n",
             "Munus fib n = Sinon n I ((fib n - I) + (fib n - II))",
@@ -143,44 +144,42 @@ final class SyntaxTest {
         );
         assertThat(
             "Fibonacci program should have three statements",
-            this.statementCount(new Rome77Syntax(code).parsed().right().get().root()),
+            this.statementCount(new Rome77Syntax(code).parsed().root()),
             is(equalTo(3))
         );
     }
 
     @Test
-    void parsesAnagnosiInput() {
+    void parsesAnagnosiInput() throws ParsingException {
         assertThat(
             "Anagnosi input should be parsed",
-            this.findText(new Rome77Syntax("As n = Anagnosi").parsed().right().get().root(), "Anagnosi"),
+            this.findText(new Rome77Syntax("As n = Anagnosi").parsed().root(), "Anagnosi"),
             is(true)
         );
     }
 
     @Test
-    void parsesRomanNumeralMMXXIV() {
+    void parsesRomanNumeralMMXXIV() throws ParsingException {
         assertThat(
             "Roman numeral MMXXIV should be parsed",
-            this.findText(new Rome77Syntax("Grafo MMXXIV").parsed().right().get().root(), "MMXXIV"),
+            this.findText(new Rome77Syntax("Grafo MMXXIV").parsed().root(), "MMXXIV"),
             is(true)
         );
     }
 
     @Test
-    void returnsErrorOnInvalidSyntax() {
-        assertThat(
-            "Invalid syntax should return error",
-            new Rome77Syntax("As = V").parsed().left().isPresent(),
-            is(true)
+    void throwsExceptionOnInvalidSyntax() {
+        assertThrows(
+            SyntaxException.class,
+            () -> new Rome77Syntax("As = V").parsed()
         );
     }
 
     @Test
-    void returnsErrorOnMissingExpression() {
-        assertThat(
-            "Missing expression should return error",
-            new Rome77Syntax("Grafo").parsed().left().isPresent(),
-            is(true)
+    void throwsExceptionOnMissingExpression() {
+        assertThrows(
+            SyntaxException.class,
+            () -> new Rome77Syntax("Grafo").parsed()
         );
     }
 

@@ -34,7 +34,8 @@ mvn clean test
 
 ```
 src/main/java/
-├── fp/          # Functional primitives (Either, Left, Right)
-├── syntax/      # Syntax tree interfaces (SyntaxTree, SyntaxNode)
-└── rome77/      # Rome77-specific parser and ANTLR integration
+├── parsing/     # ParsingException
+├── syntax/      # Syntax, SyntaxException, SyntaxNode, SyntaxTree
+└── rome77/
+    └── antlr/   # Rome77Syntax, AntlrTree, AntlrNode, Rome77Errors
 ```

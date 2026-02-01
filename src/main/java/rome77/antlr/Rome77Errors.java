@@ -4,30 +4,25 @@ import java.util.Optional;
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Recognizer;
-import rome77.ParsingError;
-import rome77.SyntaxError;
+import syntax.SyntaxException;
 
 /**
  * ANTLR error listener that captures first syntax error.
  *
  * This final class implements ANTLRErrorListener to capture
- * the first syntax error. The error is stored and can be
- * retrieved to construct Either.Left result.
+ * the first syntax error as a SyntaxException.
  *
  * Example usage:
  * <pre>
  * Rome77Errors errors = new Rome77Errors();
  * parser.addErrorListener(errors);
  * parser.program();
- * Optional&lt;ParsingError&gt; error = errors.captured();
+ * Optional&lt;SyntaxException&gt; error = errors.captured();
  * </pre>
  */
 public final class Rome77Errors extends BaseErrorListener {
 
-    /**
-     * First captured error.
-     */
-    private ParsingError error;
+    private SyntaxException error;
 
     @Override
     public void syntaxError(
@@ -39,7 +34,7 @@ public final class Rome77Errors extends BaseErrorListener {
         final RecognitionException exc
     ) {
         if (this.error == null) {
-            this.error = new SyntaxError(ln, col, msg);
+            this.error = new SyntaxException(ln, col, msg);
         }
     }
 
@@ -48,7 +43,7 @@ public final class Rome77Errors extends BaseErrorListener {
      *
      * @return Optional containing first error, or empty if no errors
      */
-    public Optional<ParsingError> captured() {
+    public Optional<SyntaxException> captured() {
         return Optional.ofNullable(this.error);
     }
 }

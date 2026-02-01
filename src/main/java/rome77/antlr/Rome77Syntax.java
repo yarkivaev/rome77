@@ -1,14 +1,12 @@
 package rome77.antlr;
 
-import fp.Either;
-import fp.Left;
-import fp.Right;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
-import rome77.ParsingError;
 import rome77.Rome77Lexer;
 import rome77.Rome77Parser;
-import rome77.Syntax;
+import parsing.ParsingException;
+import syntax.Syntax;
+import syntax.SyntaxException;
 import syntax.SyntaxTree;
 
 /**
@@ -19,14 +17,11 @@ import syntax.SyntaxTree;
  *
  * Example usage:
  * <pre>
- * Either&lt;ParsingError, SyntaxTree&gt; result = new Rome77Syntax("Grafo XIV").parsed();
+ * SyntaxTree tree = new Rome77Syntax("Grafo XIV").parsed();
  * </pre>
  */
 public final class Rome77Syntax implements Syntax {
 
-    /**
-     * Source code to parse.
-     */
     private final String source;
 
     /**
@@ -39,7 +34,7 @@ public final class Rome77Syntax implements Syntax {
     }
 
     @Override
-    public Either<ParsingError, SyntaxTree> parsed() {
+    public SyntaxTree parsed() throws ParsingException {
         final Rome77Lexer lexer = new Rome77Lexer(
             CharStreams.fromString(this.source)
         );
@@ -51,12 +46,9 @@ public final class Rome77Syntax implements Syntax {
         parser.removeErrorListeners();
         parser.addErrorListener(errors);
         final Rome77Parser.ProgramContext program = parser.program();
-        final Either<ParsingError, SyntaxTree> result;
         if (errors.captured().isPresent()) {
-            result = new Left<>(errors.captured().get());
-        } else {
-            result = new Right<>(new AntlrTree(program, parser));
+            throw errors.captured().get();
         }
-        return result;
+        return new AntlrTree(program, parser);
     }
 }
