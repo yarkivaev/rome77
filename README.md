@@ -35,8 +35,11 @@ mvn clean test
 ```
 src/main/java/
 ├── parsing/     # ParsingException
-├── lexical/     # Token, Listing, Lexer, LexicalException
+├── lexical/     # Token, Listing, Lexer, LexicalException, TokenCategory
 ├── syntax/      # Syntax, SyntaxException, SyntaxNode, SyntaxTree
+├── semantic/    # Analyzer, SemanticException
+├── ir/          # Expression, Statement, Program, Function, and related interfaces
+├── ir/simple/   # Simple implementations of IR interfaces
 └── rome77/
     └── antlr/   # Rome77Syntax, Rome77Lexer, AntlrToken, AntlrListing, AntlrTree, AntlrNode, Rome77Errors
 ```
