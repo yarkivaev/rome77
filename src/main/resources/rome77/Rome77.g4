@@ -49,12 +49,12 @@ outputStmt
     ;
 
 /**
- * Expression with function application at lowest precedence.
- * Function calls consume the full remaining expression as argument.
+ * Expression with function application.
+ * Functions are called with one or more arguments: f a, f a b, f a b c
  */
 expr
     : SINON expr expr expr                          # Conditional
-    | IDENTIFIER expr                               # FuncCall
+    | IDENTIFIER expr+                              # FuncCall
     | additive                                      # Arithmetic
     ;
 
