@@ -1,5 +1,7 @@
 package ir.simple;
 
+import emission.Emission;
+import emission.Emitted;
 import ir.Expression;
 import ir.Output;
 
@@ -26,6 +28,14 @@ public final class IrOutput implements Output {
      */
     public IrOutput(final Expression expression) {
         this.expr = expression;
+    }
+
+    @Override
+    public Emission emitted(final Emission emission) {
+        final Emitted value = this.expr.emitted(emission);
+        return value.emission().appended(
+            "call void @rome77_output(i64 " + value.register() + ")"
+        );
     }
 
     /**

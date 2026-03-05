@@ -1,5 +1,8 @@
 package ir.simple;
 
+import emission.Emission;
+import emission.Emitted;
+import emission.simple.SimpleEmitted;
 import ir.Variable;
 
 /**
@@ -34,6 +37,17 @@ public final class IrVariable implements Variable {
     @Override
     public String name() {
         return this.identifier;
+    }
+
+    @Override
+    public Emitted emitted(final Emission emission) {
+        final String reg = emission.registered();
+        return new SimpleEmitted(
+            emission.appended(
+                reg + " = load i64, ptr %" + this.identifier
+            ),
+            reg
+        );
     }
 
     /**

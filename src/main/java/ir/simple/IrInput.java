@@ -1,5 +1,8 @@
 package ir.simple;
 
+import emission.Emission;
+import emission.Emitted;
+import emission.simple.SimpleEmitted;
 import ir.Input;
 
 /**
@@ -20,6 +23,15 @@ public final class IrInput implements Input {
      * Primary constructor.
      */
     public IrInput() {
+    }
+
+    @Override
+    public Emitted emitted(final Emission emission) {
+        final String reg = emission.registered();
+        return new SimpleEmitted(
+            emission.appended(reg + " = call i64 @rome77_input()"),
+            reg
+        );
     }
 
     /**

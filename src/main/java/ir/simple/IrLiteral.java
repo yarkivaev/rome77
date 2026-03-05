@@ -1,5 +1,8 @@
 package ir.simple;
 
+import emission.Emission;
+import emission.Emitted;
+import emission.simple.SimpleEmitted;
 import ir.Literal;
 
 /**
@@ -35,6 +38,11 @@ public final class IrLiteral implements Literal {
     @Override
     public int value() {
         return this.val;
+    }
+
+    @Override
+    public Emitted emitted(final Emission emission) {
+        return new SimpleEmitted(emission, String.valueOf(this.val));
     }
 
     /**

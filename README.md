@@ -24,6 +24,19 @@ As n = Anagnosi
 Grafo fib n
 ```
 
+## Processing Pipeline
+
+```
+Source → Lexer → Syntax → Analyzer → IR Program ─┬→ Interpreter
+                                                  └→ LLVM IR → Executable
+```
+
+1. **Lexical analysis** — `Lexer` tokenizes source code into an immutable `Listing` of `Token` objects, each classified by `TokenCategory`
+2. **Syntactic analysis** — `Syntax` parses the token stream into an immutable `SyntaxTree` of `SyntaxNode` elements
+3. **Semantic analysis** — `Analyzer` validates the syntax tree (symbol resolution, arity checking) and produces an IR `Program` with `Function` and `Statement` definitions
+4. **Interpretation** — IR `Program` is walked and evaluated directly at runtime
+5. **Compilation** — IR `Program` is translated into LLVM IR and compiled into a native executable
+
 ## Build
 
 ```bash

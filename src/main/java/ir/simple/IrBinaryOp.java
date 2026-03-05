@@ -1,5 +1,8 @@
 package ir.simple;
 
+import emission.Emission;
+import emission.Emitted;
+import emission.simple.SimpleEmitted;
 import ir.BinaryOp;
 import ir.Expression;
 import ir.Operator;
@@ -43,6 +46,21 @@ public final class IrBinaryOp implements BinaryOp {
         this.rgt = right;
     }
 
+    @Override
+    public Emitted emitted(final Emission emission) {
+        final Emitted left = this.lft.emitted(emission);
+        final Emitted right = this.rgt.emitted(left.emission());
+        final Emission em = right.emission();
+        final String reg = em.registered();
+        return new SimpleEmitted(
+            em.appended(
+                reg + " = " + this.operation() + " i64 "
+                    + left.register() + ", " + right.register()
+            ),
+            reg
+        );
+    }
+
     /**
      * Returns the operator.
      *
@@ -71,6 +89,20 @@ public final class IrBinaryOp implements BinaryOp {
     @Override
     public Expression right() {
         return this.rgt;
+    }
+
+    /**
+     * Returns the LLVM IR operation name for this operator.
+     *
+     * @return LLVM IR operation string
+     */
+    private String operation() {
+        return switch (this.op) {
+            case ADD -> "add";
+            case SUB -> "sub";
+            case MUL -> "mul";
+            case DIV -> "sdiv";
+        };
     }
 
     /**

@@ -1,5 +1,8 @@
 package ir.simple;
 
+import emission.Emission;
+import emission.Emitted;
+import emission.simple.SimpleEmitted;
 import ir.Call;
 import ir.Expression;
 import java.util.ArrayList;
@@ -34,6 +37,32 @@ public final class IrCall implements Call {
         this.identifier = name;
         this.args = new ArrayList<>();
         arguments.forEach(this.args::add);
+    }
+
+    @Override
+    public Emitted emitted(final Emission emission) {
+        Emission em = emission;
+        final List<String> registers = new ArrayList<>();
+        for (final Expression arg : this.args) {
+            final Emitted result = arg.emitted(em);
+            em = result.emission();
+            registers.add(result.register());
+        }
+        final StringBuilder params = new StringBuilder();
+        for (int idx = 0; idx < registers.size(); idx++) {
+            if (idx > 0) {
+                params.append(", ");
+            }
+            params.append("i64 ").append(registers.get(idx));
+        }
+        final String reg = em.registered();
+        return new SimpleEmitted(
+            em.appended(
+                reg + " = call i64 @" + this.identifier
+                    + "(" + params + ")"
+            ),
+            reg
+        );
     }
 
     /**

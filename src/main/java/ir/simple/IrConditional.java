@@ -1,5 +1,8 @@
 package ir.simple;
 
+import emission.Emission;
+import emission.Emitted;
+import emission.simple.SimpleEmitted;
 import ir.Conditional;
 import ir.Expression;
 import java.util.Objects;
@@ -39,6 +42,41 @@ public final class IrConditional implements Conditional {
         this.cond = condition;
         this.thenExpr = thenBranch;
         this.elseExpr = elseBranch;
+    }
+
+    @Override
+    public Emitted emitted(final Emission emission) {
+        final Emitted condition = this.cond.emitted(emission);
+        Emission em = condition.emission();
+        final String cmp = em.registered();
+        em = em.appended(
+            cmp + " = icmp ne i64 " + condition.register() + ", 0"
+        );
+        final String suffix = em.registered().substring(2);
+        em = em.appended(
+            "br i1 " + cmp
+                + ", label %then_" + suffix
+                + ", label %else_" + suffix
+        );
+        em = em.appended("then_" + suffix + ":");
+        final Emitted thenResult = this.thenExpr.emitted(em);
+        em = thenResult.emission();
+        em = em.appended("br label %merge_" + suffix);
+        em = em.appended("else_" + suffix + ":");
+        final Emitted elseResult = this.elseExpr.emitted(em);
+        em = elseResult.emission();
+        em = em.appended("br label %merge_" + suffix);
+        em = em.appended("merge_" + suffix + ":");
+        final String phi = em.registered();
+        return new SimpleEmitted(
+            em.appended(
+                phi + " = phi i64 [ " + thenResult.register()
+                    + ", %then_" + suffix + " ], [ "
+                    + elseResult.register()
+                    + ", %else_" + suffix + " ]"
+            ),
+            phi
+        );
     }
 
     /**

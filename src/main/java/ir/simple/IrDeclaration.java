@@ -1,5 +1,7 @@
 package ir.simple;
 
+import emission.Emission;
+import emission.Emitted;
 import ir.Declaration;
 import ir.Expression;
 import java.util.Objects;
@@ -31,6 +33,18 @@ public final class IrDeclaration implements Declaration {
     public IrDeclaration(final String name, final Expression expression) {
         this.identifier = name;
         this.expr = expression;
+    }
+
+    @Override
+    public Emission emitted(final Emission emission) {
+        Emission em = emission.appended(
+            "%" + this.identifier + " = alloca i64"
+        );
+        final Emitted value = this.expr.emitted(em);
+        return value.emission().appended(
+            "store i64 " + value.register()
+                + ", ptr %" + this.identifier
+        );
     }
 
     /**

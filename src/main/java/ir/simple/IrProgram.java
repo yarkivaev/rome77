@@ -1,5 +1,6 @@
 package ir.simple;
 
+import emission.Emission;
 import ir.Function;
 import ir.Program;
 import ir.Statement;
@@ -40,6 +41,21 @@ public final class IrProgram implements Program {
         functions.forEach(this.fns::add);
         this.stmts = new ArrayList<>();
         statements.forEach(this.stmts::add);
+    }
+
+    @Override
+    public Emission emitted(final Emission emission) {
+        Emission em = emission.appended("declare i64 @rome77_input()");
+        em = em.appended("declare void @rome77_output(i64)");
+        for (final Function fn : this.fns) {
+            em = fn.emitted(em);
+        }
+        em = em.appended("define i32 @main() {");
+        for (final Statement stmt : this.stmts) {
+            em = stmt.emitted(em);
+        }
+        em = em.appended("ret i32 0");
+        return em.appended("}");
     }
 
     /**

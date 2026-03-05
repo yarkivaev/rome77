@@ -1,5 +1,7 @@
 package ir;
 
+import emission.Emission;
+
 /**
  * Rome77 program in intermediate representation.
  *
@@ -9,8 +11,7 @@ package ir;
  * Example usage:
  * <pre>
  * Program program = analyzer.analyzed();
- * Iterable<Function> functions = program.functions();
- * Iterable<Statement> statements = program.statements();
+ * Emission em = program.emitted(new SimpleEmission());
  * </pre>
  */
 public interface Program {
@@ -35,4 +36,12 @@ public interface Program {
      * @return Main statements, never null, may be empty
      */
     Iterable<Statement> statements();
+
+    /**
+     * Emits LLVM IR for the entire program.
+     *
+     * @param emission Current instruction sequence
+     * @return Updated emission with full program LLVM IR appended
+     */
+    Emission emitted(Emission emission);
 }

@@ -1,5 +1,7 @@
 package ir;
 
+import emission.Emission;
+
 /**
  * Function definition in intermediate representation.
  *
@@ -9,8 +11,9 @@ package ir;
  * <pre>
  * Function fib = program.functions().iterator().next();
  * String name = fib.name();
- * Iterable<String> params = fib.parameters();
+ * Iterable&lt;String&gt; params = fib.parameters();
  * Expression body = fib.body();
+ * Emission em = fib.emitted(emission);
  * </pre>
  */
 public interface Function {
@@ -38,4 +41,12 @@ public interface Function {
      * @return Body expression, never null
      */
     Expression body();
+
+    /**
+     * Emits LLVM IR for this function definition.
+     *
+     * @param emission Current instruction sequence
+     * @return Updated emission with function definition appended
+     */
+    Emission emitted(Emission emission);
 }

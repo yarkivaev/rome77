@@ -1,5 +1,8 @@
 package ir.simple;
 
+import emission.Emission;
+import emission.Emitted;
+import emission.simple.SimpleEmitted;
 import ir.Expression;
 import ir.Operator;
 import ir.UnaryOp;
@@ -32,6 +35,22 @@ public final class IrUnaryOp implements UnaryOp {
     public IrUnaryOp(final Operator operator, final Expression operand) {
         this.op = operator;
         this.expr = operand;
+    }
+
+    @Override
+    public Emitted emitted(final Emission emission) {
+        final Emitted operand = this.expr.emitted(emission);
+        if (this.op == Operator.ADD) {
+            return operand;
+        }
+        final Emission em = operand.emission();
+        final String reg = em.registered();
+        return new SimpleEmitted(
+            em.appended(
+                reg + " = sub i64 0, " + operand.register()
+            ),
+            reg
+        );
     }
 
     /**

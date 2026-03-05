@@ -1,5 +1,7 @@
 package ir.simple;
 
+import emission.Emission;
+import emission.Emitted;
 import ir.Expression;
 import ir.Function;
 import java.util.ArrayList;
@@ -44,6 +46,33 @@ public final class IrFunction implements Function {
         this.params = new ArrayList<>();
         parameters.forEach(this.params::add);
         this.expr = body;
+    }
+
+    @Override
+    public Emission emitted(final Emission emission) {
+        final StringBuilder signature = new StringBuilder();
+        for (int idx = 0; idx < this.params.size(); idx++) {
+            if (idx > 0) {
+                signature.append(", ");
+            }
+            signature.append("i64 %")
+                .append(this.params.get(idx))
+                .append("_arg");
+        }
+        Emission em = emission.appended(
+            "define i64 @" + this.identifier
+                + "(" + signature + ") {"
+        );
+        for (final String param : this.params) {
+            em = em.appended("%" + param + " = alloca i64");
+            em = em.appended(
+                "store i64 %" + param + "_arg, ptr %" + param
+            );
+        }
+        final Emitted body = this.expr.emitted(em);
+        em = body.emission();
+        em = em.appended("ret i64 " + body.register());
+        return em.appended("}");
     }
 
     /**
