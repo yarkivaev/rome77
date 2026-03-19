@@ -54,7 +54,6 @@ outputStmt
  */
 expr
     : SINON expr expr expr                          # Conditional
-    | IDENTIFIER expr+                              # FuncCall
     | additive                                      # Arithmetic
     ;
 
@@ -70,15 +69,16 @@ additive
  * Multiplicative expressions: multiplication and division.
  */
 multiplicative
-    : multiplicative op=(MULT | DIV) unary          # MulDiv
-    | unary                                         # ToUnary
+    : multiplicative op=(MULT | DIV) application
+    | application
     ;
 
 /**
- * Unary prefix operators.
+ * application prefix operators.
  */
-unary
-    : op=(PLUS | MINUS) unary                       # UnaryOp
+application
+    : op=(PLUS | MINUS) application                 # UnaryOp
+    | primary (primary)+                            # FuncCall
     | primary                                       # ToPrimary
     ;
 
@@ -122,7 +122,7 @@ ROMAN
  * Identifier: lowercase letters only.
  */
 IDENTIFIER
-    : [a-z]+
+    : [a-z]+[a-z0-9]*
     ;
 
 WS

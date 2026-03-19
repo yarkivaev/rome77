@@ -16,7 +16,7 @@ package parsing;
  * }
  * </pre>
  */
-public abstract class ParsingException extends Exception {
+public abstract class ParsingException extends RuntimeException {
 
     /**
      * Primary constructor.

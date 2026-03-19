@@ -1,11 +1,23 @@
 package semantic;
 
-import ir.*;
+import ir.Operator;
+import ir.Program;
+import ir.simple.IrBinaryOp;
+import ir.simple.IrCall;
+import ir.simple.IrConditional;
+import ir.simple.IrDeclaration;
+import ir.simple.IrFunction;
+import ir.simple.IrInput;
+import ir.simple.IrLiteral;
+import ir.simple.IrOutput;
+import ir.simple.IrProgram;
+import ir.simple.IrUnaryOp;
+import ir.simple.IrVariable;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
-import parsing.ParsingException;
 import rome77.antlr.Rome77Syntax;
-import ir.simple.*;
 import syntax.SyntaxTree;
+import util.SyntaxTreePrinter;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -25,10 +37,17 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  * Tests will initially fail, then pass as analyzer is implemented.
  */
 final class AnalyzerTest {
+    
+    private SyntaxTree tree = null;
+
+    @AfterEach
+    void printTree() {
+        SyntaxTreePrinter.printTree(tree.root());
+    }
 
     @Test
     void analyzedProducesSimpleOutputProgram() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("Grafo V").parsed();
+        tree = new Rome77Syntax("Grafo V").parsed();
         final Program expected = new IrProgram(
             Collections.emptyList(),
             Arrays.asList(
@@ -37,14 +56,14 @@ final class AnalyzerTest {
         );
         assertThat(
             "Analyzer should produce program with output statement",
-            new FakeAnalyzer(tree, expected).analyzed(),
+            new Rome77Analyzer(tree).analyzed(),
             is(equalTo(expected))
         );
     }
 
     @Test
     void analyzedProducesVariableDeclarationAndOutput() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("As x = X\nGrafo x").parsed();
+        tree = new Rome77Syntax("As x = X\nGrafo x").parsed();
         final Program expected = new IrProgram(
             Collections.emptyList(),
             Arrays.asList(
@@ -54,14 +73,14 @@ final class AnalyzerTest {
         );
         assertThat(
             "Analyzer should produce declaration and output",
-            new FakeAnalyzer(tree, expected).analyzed(),
+            new Rome77Analyzer(tree).analyzed(),
             is(equalTo(expected))
         );
     }
 
     @Test
     void analyzedProducesFunctionDefinitionAndCall() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("Munus double n = n + n\nGrafo double V").parsed();
+        tree = new Rome77Syntax("Munus double n = n + n\nGrafo double V").parsed();
         final Program expected = new IrProgram(
             Arrays.asList(
                 new IrFunction(
@@ -85,14 +104,14 @@ final class AnalyzerTest {
         );
         assertThat(
             "Analyzer should produce function definition and call",
-            new FakeAnalyzer(tree, expected).analyzed(),
+            new Rome77Analyzer(tree).analyzed(),
             is(equalTo(expected))
         );
     }
 
     @Test
     void analyzedProducesConditionalExpression() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("Grafo Sinon I XLII N").parsed();
+        tree = new Rome77Syntax("Grafo Sinon I XLII N").parsed();
         final Program expected = new IrProgram(
             Collections.emptyList(),
             Arrays.asList(
@@ -107,14 +126,14 @@ final class AnalyzerTest {
         );
         assertThat(
             "Analyzer should produce conditional expression",
-            new FakeAnalyzer(tree, expected).analyzed(),
+            new Rome77Analyzer(tree).analyzed(),
             is(equalTo(expected))
         );
     }
 
     @Test
     void analyzedProducesInputExpression() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("As k = Anagnosi\nGrafo k").parsed();
+        tree = new Rome77Syntax("As k = Anagnosi\nGrafo k").parsed();
         final Program expected = new IrProgram(
             Collections.emptyList(),
             Arrays.asList(
@@ -124,14 +143,14 @@ final class AnalyzerTest {
         );
         assertThat(
             "Analyzer should produce input expression",
-            new FakeAnalyzer(tree, expected).analyzed(),
+            new Rome77Analyzer(tree).analyzed(),
             is(equalTo(expected))
         );
     }
 
     @Test
     void analyzedProducesArithmeticExpression() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("Grafo VII * VI").parsed();
+        tree = new Rome77Syntax("Grafo VII * VI").parsed();
         final Program expected = new IrProgram(
             Collections.emptyList(),
             Arrays.asList(
@@ -146,17 +165,17 @@ final class AnalyzerTest {
         );
         assertThat(
             "Analyzer should produce multiplication expression",
-            new FakeAnalyzer(tree, expected).analyzed(),
+            new Rome77Analyzer(tree).analyzed(),
             is(equalTo(expected))
         );
     }
 
     @Test
     void analyzedThrowsExceptionForUndefinedVariable() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("Grafo x").parsed();
+        tree = new Rome77Syntax("Grafo x").parsed();
         final SemanticException exception = assertThrows(
             SemanticException.class,
-            () -> new FakeAnalyzer(tree, "Undefined variable: x").analyzed(),
+            () -> new Rome77Analyzer(tree).analyzed(),
             "Analyzer should throw exception for undefined variable"
         );
         assertThat(
@@ -168,10 +187,10 @@ final class AnalyzerTest {
 
     @Test
     void analyzedThrowsExceptionForUndefinedFunction() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("Grafo f I").parsed();
+        tree = new Rome77Syntax("Grafo f I").parsed();
         final SemanticException exception = assertThrows(
             SemanticException.class,
-            () -> new FakeAnalyzer(tree, "Undefined function: f").analyzed(),
+            () -> new Rome77Analyzer(tree).analyzed(),
             "Analyzer should throw exception for undefined function"
         );
         assertThat(
@@ -183,10 +202,10 @@ final class AnalyzerTest {
 
     @Test
     void analyzedThrowsExceptionForArityMismatch() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("Munus sum a b = a + b\nGrafo sum I").parsed();
+        tree = new Rome77Syntax("Munus sum a b = a + b\nGrafo sum I").parsed();
         final SemanticException exception = assertThrows(
             SemanticException.class,
-            () -> new FakeAnalyzer(tree, "Function sum expects 2 arguments, got 1").analyzed(),
+            () -> new Rome77Analyzer(tree).analyzed(),
             "Analyzer should throw exception for arity mismatch"
         );
         assertThat(
@@ -198,7 +217,7 @@ final class AnalyzerTest {
 
     @Test
     void analyzedProducesRecursiveFibonacciFunction() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("Munus fib n = Sinon (n - I) ((fib n - I) + (fib n - II)) I\nGrafo fib X").parsed();
+        tree = new Rome77Syntax("Munus fib n = Sinon (n - I) ((fib n - I) + (fib n - II)) I\nGrafo fib X").parsed();
         final Program expected = new IrProgram(
             Arrays.asList(
                 new IrFunction(
@@ -248,13 +267,13 @@ final class AnalyzerTest {
         );
         assertThat(
             "Analyzer should produce recursive fibonacci function",
-            new FakeAnalyzer(tree, expected).analyzed(),
+            new Rome77Analyzer(tree).analyzed(),
             is(equalTo(expected))
         );
     }
     @Test
     void analyzedProducesDivisionExpression() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("Grafo X / II").parsed();
+        tree = new Rome77Syntax("Grafo X / II").parsed();
         final Program expected = new IrProgram(
             Collections.emptyList(),
             Arrays.asList(
@@ -269,13 +288,13 @@ final class AnalyzerTest {
         );
         assertThat(
             "Analyzer should produce division expression",
-            new FakeAnalyzer(tree, expected).analyzed(),
+            new Rome77Analyzer(tree).analyzed(),
             is(equalTo(expected))
         );
     }
     @Test
     void analyzedProducesUnaryMinusExpression() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("Grafo -V").parsed();
+        tree = new Rome77Syntax("Grafo -V").parsed();
         final Program expected = new IrProgram(
             Collections.emptyList(),
             Arrays.asList(
@@ -289,13 +308,13 @@ final class AnalyzerTest {
         );
         assertThat(
             "Analyzer should produce unary negation",
-            new FakeAnalyzer(tree, expected).analyzed(),
+            new Rome77Analyzer(tree).analyzed(),
             is(equalTo(expected))
         );
     }
     @Test
     void analyzedProducesUnaryPlusExpression() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("Grafo +V").parsed();
+        tree = new Rome77Syntax("Grafo +V").parsed();
         final Program expected = new IrProgram(
             Collections.emptyList(),
             Arrays.asList(
@@ -309,13 +328,13 @@ final class AnalyzerTest {
         );
         assertThat(
             "Analyzer should produce unary plus",
-            new FakeAnalyzer(tree, expected).analyzed(),
+            new Rome77Analyzer(tree).analyzed(),
             is(equalTo(expected))
         );
     }
     @Test
     void analyzedProducesOperatorPrecedenceMultiplicationFirst() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("Grafo I + II * III").parsed();
+        tree = new Rome77Syntax("Grafo I + II * III").parsed();
         final Program expected = new IrProgram(
             Collections.emptyList(),
             Arrays.asList(
@@ -334,13 +353,13 @@ final class AnalyzerTest {
         );
         assertThat(
             "Analyzer should respect multiplication precedence over addition",
-            new FakeAnalyzer(tree, expected).analyzed(),
+            new Rome77Analyzer(tree).analyzed(),
             is(equalTo(expected))
         );
     }
     @Test
     void analyzedProducesOperatorPrecedenceDivisionFirst() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("Grafo X - IV / II").parsed();
+        tree = new Rome77Syntax("Grafo X - IV / II").parsed();
         final Program expected = new IrProgram(
             Collections.emptyList(),
             Arrays.asList(
@@ -359,13 +378,13 @@ final class AnalyzerTest {
         );
         assertThat(
             "Analyzer should respect division precedence over subtraction",
-            new FakeAnalyzer(tree, expected).analyzed(),
+            new Rome77Analyzer(tree).analyzed(),
             is(equalTo(expected))
         );
     }
     @Test
     void analyzedProducesLeftAssociativitySubtraction() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("Grafo V - II - I").parsed();
+        tree = new Rome77Syntax("Grafo V - II - I").parsed();
         final Program expected = new IrProgram(
             Collections.emptyList(),
             Arrays.asList(
@@ -384,13 +403,13 @@ final class AnalyzerTest {
         );
         assertThat(
             "Analyzer should respect left associativity of subtraction",
-            new FakeAnalyzer(tree, expected).analyzed(),
+            new Rome77Analyzer(tree).analyzed(),
             is(equalTo(expected))
         );
     }
     @Test
     void analyzedProducesLeftAssociativityDivision() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("Grafo VIII / IV / II").parsed();
+        tree = new Rome77Syntax("Grafo VIII / IV / II").parsed();
         final Program expected = new IrProgram(
             Collections.emptyList(),
             Arrays.asList(
@@ -409,13 +428,13 @@ final class AnalyzerTest {
         );
         assertThat(
             "Analyzer should respect left associativity of division",
-            new FakeAnalyzer(tree, expected).analyzed(),
+            new Rome77Analyzer(tree).analyzed(),
             is(equalTo(expected))
         );
     }
     @Test
     void analyzedProducesZeroLiteral() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("Grafo N").parsed();
+        tree = new Rome77Syntax("Grafo N").parsed();
         final Program expected = new IrProgram(
             Collections.emptyList(),
             Arrays.asList(
@@ -424,13 +443,13 @@ final class AnalyzerTest {
         );
         assertThat(
             "Analyzer should produce zero literal",
-            new FakeAnalyzer(tree, expected).analyzed(),
+            new Rome77Analyzer(tree).analyzed(),
             is(equalTo(expected))
         );
     }
     @Test
     void analyzedProducesZeroInVariableDeclaration() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("As x = N\nGrafo x").parsed();
+        tree = new Rome77Syntax("As x = N\nGrafo x").parsed();
         final Program expected = new IrProgram(
             Collections.emptyList(),
             Arrays.asList(
@@ -440,13 +459,13 @@ final class AnalyzerTest {
         );
         assertThat(
             "Analyzer should handle zero in variable declaration",
-            new FakeAnalyzer(tree, expected).analyzed(),
+            new Rome77Analyzer(tree).analyzed(),
             is(equalTo(expected))
         );
     }
     @Test
     void analyzedProducesZeroInArithmeticAddition() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("Grafo N + I").parsed();
+        tree = new Rome77Syntax("Grafo N + I").parsed();
         final Program expected = new IrProgram(
             Collections.emptyList(),
             Arrays.asList(
@@ -461,13 +480,13 @@ final class AnalyzerTest {
         );
         assertThat(
             "Analyzer should handle zero in addition",
-            new FakeAnalyzer(tree, expected).analyzed(),
+            new Rome77Analyzer(tree).analyzed(),
             is(equalTo(expected))
         );
     }
     @Test
     void analyzedProducesZeroInArithmeticMultiplication() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("Grafo N * X").parsed();
+        tree = new Rome77Syntax("Grafo N * X").parsed();
         final Program expected = new IrProgram(
             Collections.emptyList(),
             Arrays.asList(
@@ -482,13 +501,13 @@ final class AnalyzerTest {
         );
         assertThat(
             "Analyzer should handle zero in multiplication",
-            new FakeAnalyzer(tree, expected).analyzed(),
+            new Rome77Analyzer(tree).analyzed(),
             is(equalTo(expected))
         );
     }
     @Test
     void analyzedProducesZeroAsFunctionArgument() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("Munus f n = n + I\nGrafo f N").parsed();
+        tree = new Rome77Syntax("Munus f n = n + I\nGrafo f N").parsed();
         final Program expected = new IrProgram(
             Arrays.asList(
                 new IrFunction(
@@ -512,13 +531,13 @@ final class AnalyzerTest {
         );
         assertThat(
             "Analyzer should handle zero as function argument",
-            new FakeAnalyzer(tree, expected).analyzed(),
+            new Rome77Analyzer(tree).analyzed(),
             is(equalTo(expected))
         );
     }
     @Test
     void analyzedProducesMultipleVariables() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("As x = I\nAs y = II\nGrafo x + y").parsed();
+        tree = new Rome77Syntax("As x = I\nAs y = II\nGrafo x + y").parsed();
         final Program expected = new IrProgram(
             Collections.emptyList(),
             Arrays.asList(
@@ -535,13 +554,13 @@ final class AnalyzerTest {
         );
         assertThat(
             "Analyzer should handle multiple variable declarations",
-            new FakeAnalyzer(tree, expected).analyzed(),
+            new Rome77Analyzer(tree).analyzed(),
             is(equalTo(expected))
         );
     }
     @Test
     void analyzedProducesVariableInComplexExpression() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("As x = V\nGrafo x * II + III").parsed();
+        tree = new Rome77Syntax("As x = V\nGrafo x * II + III").parsed();
         final Program expected = new IrProgram(
             Collections.emptyList(),
             Arrays.asList(
@@ -561,13 +580,13 @@ final class AnalyzerTest {
         );
         assertThat(
             "Analyzer should handle variable in complex expression",
-            new FakeAnalyzer(tree, expected).analyzed(),
+            new Rome77Analyzer(tree).analyzed(),
             is(equalTo(expected))
         );
     }
     @Test
     void analyzedProducesVariableAsConditionalCondition() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("As x = I\nGrafo Sinon x II III").parsed();
+        tree = new Rome77Syntax("As x = I\nGrafo Sinon x II III").parsed();
         final Program expected = new IrProgram(
             Collections.emptyList(),
             Arrays.asList(
@@ -583,13 +602,13 @@ final class AnalyzerTest {
         );
         assertThat(
             "Analyzer should handle variable as conditional condition",
-            new FakeAnalyzer(tree, expected).analyzed(),
+            new Rome77Analyzer(tree).analyzed(),
             is(equalTo(expected))
         );
     }
     @Test
     void analyzedProducesMultipleVariablesInExpression() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("As x = I\nAs y = II\nAs z = III\nGrafo x + y + z").parsed();
+        tree = new Rome77Syntax("As x = I\nAs y = II\nAs z = III\nGrafo x + y + z").parsed();
         final Program expected = new IrProgram(
             Collections.emptyList(),
             Arrays.asList(
@@ -611,13 +630,13 @@ final class AnalyzerTest {
         );
         assertThat(
             "Analyzer should handle multiple variables in expression",
-            new FakeAnalyzer(tree, expected).analyzed(),
+            new Rome77Analyzer(tree).analyzed(),
             is(equalTo(expected))
         );
     }
     @Test
     void analyzedProducesUnusedVariable() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("As x = I\nAs y = II\nGrafo x").parsed();
+        tree = new Rome77Syntax("As x = I\nAs y = II\nGrafo x").parsed();
         final Program expected = new IrProgram(
             Collections.emptyList(),
             Arrays.asList(
@@ -628,13 +647,13 @@ final class AnalyzerTest {
         );
         assertThat(
             "Analyzer should accept unused variable",
-            new FakeAnalyzer(tree, expected).analyzed(),
+            new Rome77Analyzer(tree).analyzed(),
             is(equalTo(expected))
         );
     }
     @Test
     void analyzedProducesSingleParameterIdentityFunction() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("Munus identity x = x\nGrafo identity V").parsed();
+        tree = new Rome77Syntax("Munus identity x = x\nGrafo identity V").parsed();
         final Program expected = new IrProgram(
             Arrays.asList(
                 new IrFunction(
@@ -651,13 +670,13 @@ final class AnalyzerTest {
         );
         assertThat(
             "Analyzer should handle single-parameter identity function",
-            new FakeAnalyzer(tree, expected).analyzed(),
+            new Rome77Analyzer(tree).analyzed(),
             is(equalTo(expected))
         );
     }
     @Test
     void analyzedProducesThreeParameterFunctionDefinition() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("Munus add3 a b c = a + b + c\nGrafo add3 I II III").parsed();
+        tree = new Rome77Syntax("Munus add3 a b c = a + b + c\nGrafo add3 I II III").parsed();
         final Program expected = new IrProgram(
             Arrays.asList(
                 new IrFunction(
@@ -689,13 +708,13 @@ final class AnalyzerTest {
         );
         assertThat(
             "Analyzer should handle three-parameter function with multi-argument call",
-            new FakeAnalyzer(tree, expected).analyzed(),
+            new Rome77Analyzer(tree).analyzed(),
             is(equalTo(expected))
         );
     }
     @Test
     void analyzedProducesFourParameterFunctionDefinition() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("Munus add4 a b c d = a + b + c + d\nGrafo add4 I II III IV").parsed();
+        tree = new Rome77Syntax("Munus add4 a b c d = a + b + c + d\nGrafo add4 I II III IV").parsed();
         final Program expected = new IrProgram(
             Arrays.asList(
                 new IrFunction(
@@ -732,13 +751,13 @@ final class AnalyzerTest {
         );
         assertThat(
             "Analyzer should handle four-parameter function with multi-argument call",
-            new FakeAnalyzer(tree, expected).analyzed(),
+            new Rome77Analyzer(tree).analyzed(),
             is(equalTo(expected))
         );
     }
     @Test
     void analyzedProducesMultipleFunctionDefinitions() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("Munus f n = n\nMunus g n = n + I\nGrafo (f I) + (g II)").parsed();
+        tree = new Rome77Syntax("Munus f n = n\nMunus g n = n + I\nGrafo (f I) + (g II)").parsed();
         final Program expected = new IrProgram(
             Arrays.asList(
                 new IrFunction(
@@ -768,13 +787,13 @@ final class AnalyzerTest {
         );
         assertThat(
             "Analyzer should handle multiple function definitions",
-            new FakeAnalyzer(tree, expected).analyzed(),
+            new Rome77Analyzer(tree).analyzed(),
             is(equalTo(expected))
         );
     }
     @Test
     void analyzedProducesUnusedFunction() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("Munus f n = n\nMunus g n = n + I\nGrafo g I").parsed();
+        tree = new Rome77Syntax("Munus f n = n\nMunus g n = n + I\nGrafo g I").parsed();
         final Program expected = new IrProgram(
             Arrays.asList(
                 new IrFunction(
@@ -800,13 +819,13 @@ final class AnalyzerTest {
         );
         assertThat(
             "Analyzer should accept unused function",
-            new FakeAnalyzer(tree, expected).analyzed(),
+            new Rome77Analyzer(tree).analyzed(),
             is(equalTo(expected))
         );
     }
     @Test
     void analyzedProducesNestedFunctionCalls() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("Munus f n = n + I\nMunus g n = f n + I\nGrafo g I").parsed();
+        tree = new Rome77Syntax("Munus f n = n + I\nMunus g n = f n + I\nGrafo g I").parsed();
         final Program expected = new IrProgram(
             Arrays.asList(
                 new IrFunction(
@@ -836,13 +855,13 @@ final class AnalyzerTest {
         );
         assertThat(
             "Analyzer should handle nested function calls",
-            new FakeAnalyzer(tree, expected).analyzed(),
+            new Rome77Analyzer(tree).analyzed(),
             is(equalTo(expected))
         );
     }
     @Test
     void analyzedProducesFunctionWithComplexBody() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("Munus f a b = (a + b) * (a - b)\nGrafo f V III").parsed();
+        tree = new Rome77Syntax("Munus f a b = (a + b) * (a - b)\nGrafo f V III").parsed();
         final Program expected = new IrProgram(
             Arrays.asList(
                 new IrFunction(
@@ -877,13 +896,13 @@ final class AnalyzerTest {
         );
         assertThat(
             "Analyzer should handle two-parameter function with complex body and multi-argument call",
-            new FakeAnalyzer(tree, expected).analyzed(),
+            new Rome77Analyzer(tree).analyzed(),
             is(equalTo(expected))
         );
     }
     @Test
     void analyzedProducesFunctionReturningConditional() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("Munus abs n = Sinon n n (-n)\nGrafo abs V").parsed();
+        tree = new Rome77Syntax("Munus abs n = Sinon n n (-n)\nGrafo abs V").parsed();
         final Program expected = new IrProgram(
             Arrays.asList(
                 new IrFunction(
@@ -907,13 +926,13 @@ final class AnalyzerTest {
         );
         assertThat(
             "Analyzer should handle function returning conditional",
-            new FakeAnalyzer(tree, expected).analyzed(),
+            new Rome77Analyzer(tree).analyzed(),
             is(equalTo(expected))
         );
     }
     @Test
     void analyzedProducesConditionalWithVariableCondition() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("As x = I\nGrafo Sinon x II III").parsed();
+        tree = new Rome77Syntax("As x = I\nGrafo Sinon x II III").parsed();
         final Program expected = new IrProgram(
             Collections.emptyList(),
             Arrays.asList(
@@ -929,13 +948,13 @@ final class AnalyzerTest {
         );
         assertThat(
             "Analyzer should handle conditional with variable condition",
-            new FakeAnalyzer(tree, expected).analyzed(),
+            new Rome77Analyzer(tree).analyzed(),
             is(equalTo(expected))
         );
     }
     @Test
     void analyzedProducesNestedConditionals() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("Grafo Sinon I (Sinon II III IV) V").parsed();
+        tree = new Rome77Syntax("Grafo Sinon I (Sinon II III IV) V").parsed();
         final Program expected = new IrProgram(
             Collections.emptyList(),
             Arrays.asList(
@@ -954,13 +973,13 @@ final class AnalyzerTest {
         );
         assertThat(
             "Analyzer should handle nested conditionals",
-            new FakeAnalyzer(tree, expected).analyzed(),
+            new Rome77Analyzer(tree).analyzed(),
             is(equalTo(expected))
         );
     }
     @Test
     void analyzedProducesConditionalWithFunctionCalls() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("Munus f n = n + I\nGrafo Sinon I (f I) (f II)").parsed();
+        tree = new Rome77Syntax("Munus f n = n + I\nGrafo Sinon I (f I) (f II)").parsed();
         final Program expected = new IrProgram(
             Arrays.asList(
                 new IrFunction(
@@ -985,13 +1004,13 @@ final class AnalyzerTest {
         );
         assertThat(
             "Analyzer should handle conditional with function calls in branches",
-            new FakeAnalyzer(tree, expected).analyzed(),
+            new Rome77Analyzer(tree).analyzed(),
             is(equalTo(expected))
         );
     }
     @Test
     void analyzedProducesDeeplyNestedConditionals() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("Grafo Sinon I (Sinon I (Sinon I II III) IV) V").parsed();
+        tree = new Rome77Syntax("Grafo Sinon I (Sinon I (Sinon I II III) IV) V").parsed();
         final Program expected = new IrProgram(
             Collections.emptyList(),
             Arrays.asList(
@@ -1014,13 +1033,13 @@ final class AnalyzerTest {
         );
         assertThat(
             "Analyzer should handle deeply nested conditionals",
-            new FakeAnalyzer(tree, expected).analyzed(),
+            new Rome77Analyzer(tree).analyzed(),
             is(equalTo(expected))
         );
     }
     @Test
     void analyzedProducesConditionalWithComplexCondition() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("Grafo Sinon (I + II - III) X N").parsed();
+        tree = new Rome77Syntax("Grafo Sinon (I + II - III) X N").parsed();
         final Program expected = new IrProgram(
             Collections.emptyList(),
             Arrays.asList(
@@ -1043,13 +1062,13 @@ final class AnalyzerTest {
         );
         assertThat(
             "Analyzer should handle conditional with complex condition",
-            new FakeAnalyzer(tree, expected).analyzed(),
+            new Rome77Analyzer(tree).analyzed(),
             is(equalTo(expected))
         );
     }
     @Test
     void analyzedProducesMultipleInputs() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("As x = Anagnosi\nAs y = Anagnosi\nGrafo x + y").parsed();
+        tree = new Rome77Syntax("As x = Anagnosi\nAs y = Anagnosi\nGrafo x + y").parsed();
         final Program expected = new IrProgram(
             Collections.emptyList(),
             Arrays.asList(
@@ -1066,13 +1085,13 @@ final class AnalyzerTest {
         );
         assertThat(
             "Analyzer should handle multiple inputs",
-            new FakeAnalyzer(tree, expected).analyzed(),
+            new Rome77Analyzer(tree).analyzed(),
             is(equalTo(expected))
         );
     }
     @Test
     void analyzedProducesMultipleOutputs() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("As x = I\nAs y = II\nGrafo x\nGrafo y").parsed();
+        tree = new Rome77Syntax("As x = I\nAs y = II\nGrafo x\nGrafo y").parsed();
         final Program expected = new IrProgram(
             Collections.emptyList(),
             Arrays.asList(
@@ -1084,13 +1103,13 @@ final class AnalyzerTest {
         );
         assertThat(
             "Analyzer should handle multiple outputs",
-            new FakeAnalyzer(tree, expected).analyzed(),
+            new Rome77Analyzer(tree).analyzed(),
             is(equalTo(expected))
         );
     }
     @Test
     void analyzedProducesInputInExpression() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("Grafo Anagnosi + I").parsed();
+        tree = new Rome77Syntax("Grafo Anagnosi + I").parsed();
         final Program expected = new IrProgram(
             Collections.emptyList(),
             Arrays.asList(
@@ -1105,13 +1124,13 @@ final class AnalyzerTest {
         );
         assertThat(
             "Analyzer should handle input in expression",
-            new FakeAnalyzer(tree, expected).analyzed(),
+            new Rome77Analyzer(tree).analyzed(),
             is(equalTo(expected))
         );
     }
     @Test
     void analyzedProducesInputAsConditionalCondition() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("Grafo Sinon Anagnosi I II").parsed();
+        tree = new Rome77Syntax("Grafo Sinon Anagnosi I II").parsed();
         final Program expected = new IrProgram(
             Collections.emptyList(),
             Arrays.asList(
@@ -1126,26 +1145,26 @@ final class AnalyzerTest {
         );
         assertThat(
             "Analyzer should handle input as conditional condition",
-            new FakeAnalyzer(tree, expected).analyzed(),
+            new Rome77Analyzer(tree).analyzed(),
             is(equalTo(expected))
         );
     }
     @Test
     void analyzedProducesEmptyProgram() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("").parsed();
+        tree = new Rome77Syntax("").parsed();
         final Program expected = new IrProgram(
             Collections.emptyList(),
             Collections.emptyList()
         );
         assertThat(
             "Analyzer should handle empty program",
-            new FakeAnalyzer(tree, expected).analyzed(),
+            new Rome77Analyzer(tree).analyzed(),
             is(equalTo(expected))
         );
     }
     @Test
     void analyzedProducesFunctionOnlyProgram() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("Munus f n = n").parsed();
+        tree = new Rome77Syntax("Munus f n = n").parsed();
         final Program expected = new IrProgram(
             Arrays.asList(
                 new IrFunction(
@@ -1158,13 +1177,13 @@ final class AnalyzerTest {
         );
         assertThat(
             "Analyzer should handle program with only function definitions",
-            new FakeAnalyzer(tree, expected).analyzed(),
+            new Rome77Analyzer(tree).analyzed(),
             is(equalTo(expected))
         );
     }
     @Test
     void analyzedProducesComplexProgram() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("Munus inc n = n + I\nAs x = Anagnosi\nAs y = inc x\nGrafo Sinon y (y * II) N").parsed();
+        tree = new Rome77Syntax("Munus inc n = n + I\nAs x = Anagnosi\nAs y = inc x\nGrafo Sinon y (y * II) N").parsed();
         final Program expected = new IrProgram(
             Arrays.asList(
                 new IrFunction(
@@ -1198,16 +1217,16 @@ final class AnalyzerTest {
         );
         assertThat(
             "Analyzer should handle complex program with functions variables and conditionals",
-            new FakeAnalyzer(tree, expected).analyzed(),
+            new Rome77Analyzer(tree).analyzed(),
             is(equalTo(expected))
         );
     }
     @Test
     void analyzedThrowsExceptionForDuplicateVariable() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("As x = I\nAs x = II").parsed();
+        tree = new Rome77Syntax("As x = I\nAs x = II").parsed();
         final SemanticException exception = assertThrows(
             SemanticException.class,
-            () -> new FakeAnalyzer(tree, "Variable x is already defined").analyzed(),
+            () -> new Rome77Analyzer(tree).analyzed(),
             "Analyzer should reject duplicate variable declaration"
         );
         assertThat(
@@ -1218,10 +1237,10 @@ final class AnalyzerTest {
     }
     @Test
     void analyzedThrowsExceptionForSelfReferencingVariable() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("As x = x + I").parsed();
+        tree = new Rome77Syntax("As x = x + I").parsed();
         final SemanticException exception = assertThrows(
             SemanticException.class,
-            () -> new FakeAnalyzer(tree, "Undefined variable: x").analyzed(),
+            () -> new Rome77Analyzer(tree).analyzed(),
             "Analyzer should reject self-referencing variable"
         );
         assertThat(
@@ -1232,10 +1251,10 @@ final class AnalyzerTest {
     }
     @Test
     void analyzedThrowsExceptionForUndefinedVariableInExpression() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("As x = y + I").parsed();
+        tree = new Rome77Syntax("As x = y + I").parsed();
         final SemanticException exception = assertThrows(
             SemanticException.class,
-            () -> new FakeAnalyzer(tree, "Undefined variable: y").analyzed(),
+            () -> new Rome77Analyzer(tree).analyzed(),
             "Analyzer should reject undefined variable in expression"
         );
         assertThat(
@@ -1246,10 +1265,10 @@ final class AnalyzerTest {
     }
     @Test
     void analyzedThrowsExceptionForUndefinedVariableInConditional() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("Grafo Sinon x I II").parsed();
+        tree = new Rome77Syntax("Grafo Sinon x I II").parsed();
         final SemanticException exception = assertThrows(
             SemanticException.class,
-            () -> new FakeAnalyzer(tree, "Undefined variable: x").analyzed(),
+            () -> new Rome77Analyzer(tree).analyzed(),
             "Analyzer should reject undefined variable in conditional"
         );
         assertThat(
@@ -1260,10 +1279,10 @@ final class AnalyzerTest {
     }
     @Test
     void analyzedThrowsExceptionForUndefinedVariableInFunctionBody() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("Munus f n = x + n\nGrafo f I").parsed();
+        tree = new Rome77Syntax("Munus f n = x + n\nGrafo f I").parsed();
         final SemanticException exception = assertThrows(
             SemanticException.class,
-            () -> new FakeAnalyzer(tree, "Undefined variable: x").analyzed(),
+            () -> new Rome77Analyzer(tree).analyzed(),
             "Analyzer should reject undefined variable in function body"
         );
         assertThat(
@@ -1274,10 +1293,10 @@ final class AnalyzerTest {
     }
     @Test
     void analyzedThrowsExceptionForVariableUsedBeforeDeclaration() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("Grafo x\nAs x = I").parsed();
+        tree = new Rome77Syntax("Grafo x\nAs x = I").parsed();
         final SemanticException exception = assertThrows(
             SemanticException.class,
-            () -> new FakeAnalyzer(tree, "Undefined variable: x").analyzed(),
+            () -> new Rome77Analyzer(tree).analyzed(),
             "Analyzer should reject variable used before declaration"
         );
         assertThat(
@@ -1288,10 +1307,10 @@ final class AnalyzerTest {
     }
     @Test
     void analyzedThrowsExceptionForDuplicateFunction() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("Munus f n = n\nMunus f n = n + I").parsed();
+        tree = new Rome77Syntax("Munus f n = n\nMunus f n = n + I").parsed();
         final SemanticException exception = assertThrows(
             SemanticException.class,
-            () -> new FakeAnalyzer(tree, "Function f is already defined").analyzed(),
+            () -> new Rome77Analyzer(tree).analyzed(),
             "Analyzer should reject duplicate function definitions"
         );
         assertThat(
@@ -1302,10 +1321,10 @@ final class AnalyzerTest {
     }
     @Test
     void analyzedThrowsExceptionForDuplicateParameters() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("Munus f a a = a").parsed();
+        tree = new Rome77Syntax("Munus f a a = a").parsed();
         final SemanticException exception = assertThrows(
             SemanticException.class,
-            () -> new FakeAnalyzer(tree, "Duplicate parameter name: a").analyzed(),
+            () -> new Rome77Analyzer(tree).analyzed(),
             "Analyzer should reject duplicate parameter names"
         );
         assertThat(
@@ -1316,10 +1335,10 @@ final class AnalyzerTest {
     }
     @Test
     void analyzedThrowsExceptionForTriplicateParameters() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("Munus f a b a = a + b").parsed();
+        tree = new Rome77Syntax("Munus f a b a = a + b").parsed();
         final SemanticException exception = assertThrows(
             SemanticException.class,
-            () -> new FakeAnalyzer(tree, "Duplicate parameter name: a").analyzed(),
+            () -> new Rome77Analyzer(tree).analyzed(),
             "Analyzer should reject triplicate parameter names"
         );
         assertThat(
@@ -1330,10 +1349,10 @@ final class AnalyzerTest {
     }
     @Test
     void analyzedThrowsExceptionForArityMismatchTooMany() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("Munus sum a b = a + b\nGrafo sum I II III").parsed();
+        tree = new Rome77Syntax("Munus sum a b = a + b\nGrafo sum I II III").parsed();
         final SemanticException exception = assertThrows(
             SemanticException.class,
-            () -> new FakeAnalyzer(tree, "Function sum expects 2 arguments, got 3").analyzed(),
+            () -> new Rome77Analyzer(tree).analyzed(),
             "Analyzer should reject too many arguments to function"
         );
         assertThat(
@@ -1344,10 +1363,10 @@ final class AnalyzerTest {
     }
     @Test
     void analyzedThrowsExceptionForArityMismatchZeroGiven() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("Munus f n = n\nGrafo f").parsed();
+        tree = new Rome77Syntax("Munus f n = n\nGrafo f").parsed();
         final SemanticException exception = assertThrows(
             SemanticException.class,
-            () -> new FakeAnalyzer(tree, "Function f expects 1 arguments, got 0").analyzed(),
+            () -> new Rome77Analyzer(tree).analyzed(),
             "Analyzer should reject zero arguments when one expected"
         );
         assertThat(
@@ -1358,10 +1377,10 @@ final class AnalyzerTest {
     }
     @Test
     void analyzedThrowsExceptionForArityMismatchWithFourParameters() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("Munus add4 a b c d = a + b + c + d\nGrafo add4 I").parsed();
+        tree = new Rome77Syntax("Munus add4 a b c d = a + b + c + d\nGrafo add4 I").parsed();
         final SemanticException exception = assertThrows(
             SemanticException.class,
-            () -> new FakeAnalyzer(tree, "Function add4 expects 4 arguments, got 1").analyzed(),
+            () -> new Rome77Analyzer(tree).analyzed(),
             "Analyzer should reject wrong arity for four-parameter function"
         );
         assertThat(
@@ -1372,10 +1391,10 @@ final class AnalyzerTest {
     }
     @Test
     void analyzedThrowsExceptionForUndefinedFunctionInFunctionBody() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("Munus f n = g n\nGrafo f I").parsed();
+        tree = new Rome77Syntax("Munus f n = g n\nGrafo f I").parsed();
         final SemanticException exception = assertThrows(
             SemanticException.class,
-            () -> new FakeAnalyzer(tree, "Undefined function: g").analyzed(),
+            () -> new Rome77Analyzer(tree).analyzed(),
             "Analyzer should reject undefined function in function body"
         );
         assertThat(
@@ -1386,10 +1405,10 @@ final class AnalyzerTest {
     }
     @Test
     void analyzedThrowsExceptionForFunctionCallingItselfIncorrectly() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("Munus f n = f n m").parsed();
+        tree = new Rome77Syntax("Munus f n = f n m").parsed();
         final SemanticException exception = assertThrows(
             SemanticException.class,
-            () -> new FakeAnalyzer(tree, "Undefined variable: m").analyzed(),
+            () -> new Rome77Analyzer(tree).analyzed(),
             "Analyzer should reject recursive function with undefined variables"
         );
         assertThat(
@@ -1400,7 +1419,7 @@ final class AnalyzerTest {
     }
     @Test
     void analyzedThrowsExceptionForParameterShadowingItself() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("As n = I\nMunus f n = n + I\nGrafo f II").parsed();
+        tree = new Rome77Syntax("As n = I\nMunus f n = n + I\nGrafo f II").parsed();
         final Program expected = new IrProgram(
             Arrays.asList(
                 new IrFunction(
@@ -1422,16 +1441,16 @@ final class AnalyzerTest {
         );
         assertThat(
             "Analyzer should allow parameter shadowing outer variable",
-            new FakeAnalyzer(tree, expected).analyzed(),
+            new Rome77Analyzer(tree).analyzed(),
             is(equalTo(expected))
         );
     }
     @Test
     void analyzedThrowsExceptionForFunctionVariableNameCollision() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("As f = I\nMunus f n = n").parsed();
+        tree = new Rome77Syntax("As f = I\nMunus f n = n").parsed();
         final SemanticException exception = assertThrows(
             SemanticException.class,
-            () -> new FakeAnalyzer(tree, "Function f is already defined").analyzed(),
+            () -> new Rome77Analyzer(tree).analyzed(),
             "Analyzer should reject function with same name as variable"
         );
         assertThat(
@@ -1442,10 +1461,10 @@ final class AnalyzerTest {
     }
     @Test
     void analyzedThrowsExceptionForInvalidConditionalCondition() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("Grafo Sinon x I II").parsed();
+        tree = new Rome77Syntax("Grafo Sinon x I II").parsed();
         final SemanticException exception = assertThrows(
             SemanticException.class,
-            () -> new FakeAnalyzer(tree, "Undefined variable: x").analyzed(),
+            () -> new Rome77Analyzer(tree).analyzed(),
             "Analyzer should reject undefined variable in conditional condition"
         );
         assertThat(
@@ -1456,10 +1475,10 @@ final class AnalyzerTest {
     }
     @Test
     void analyzedThrowsExceptionForInvalidConditionalThen() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("Grafo Sinon I x II").parsed();
+        tree = new Rome77Syntax("Grafo Sinon I x II").parsed();
         final SemanticException exception = assertThrows(
             SemanticException.class,
-            () -> new FakeAnalyzer(tree, "Undefined variable: x").analyzed(),
+            () -> new Rome77Analyzer(tree).analyzed(),
             "Analyzer should reject undefined variable in then branch"
         );
         assertThat(
@@ -1470,10 +1489,10 @@ final class AnalyzerTest {
     }
     @Test
     void analyzedThrowsExceptionForInvalidConditionalElse() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("Grafo Sinon I II x").parsed();
+        tree = new Rome77Syntax("Grafo Sinon I II x").parsed();
         final SemanticException exception = assertThrows(
             SemanticException.class,
-            () -> new FakeAnalyzer(tree, "Undefined variable: x").analyzed(),
+            () -> new Rome77Analyzer(tree).analyzed(),
             "Analyzer should reject undefined variable in else branch"
         );
         assertThat(
@@ -1484,10 +1503,10 @@ final class AnalyzerTest {
     }
     @Test
     void analyzedThrowsExceptionForInvalidBinaryOperand() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("Grafo x + I").parsed();
+        tree = new Rome77Syntax("Grafo x + I").parsed();
         final SemanticException exception = assertThrows(
             SemanticException.class,
-            () -> new FakeAnalyzer(tree, "Undefined variable: x").analyzed(),
+            () -> new Rome77Analyzer(tree).analyzed(),
             "Analyzer should reject undefined variable in binary operation"
         );
         assertThat(
@@ -1498,10 +1517,10 @@ final class AnalyzerTest {
     }
     @Test
     void analyzedThrowsExceptionForInvalidUnaryOperand() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("Grafo -x").parsed();
+        tree = new Rome77Syntax("Grafo -x").parsed();
         final SemanticException exception = assertThrows(
             SemanticException.class,
-            () -> new FakeAnalyzer(tree, "Undefined variable: x").analyzed(),
+            () -> new Rome77Analyzer(tree).analyzed(),
             "Analyzer should reject undefined variable in unary operation"
         );
         assertThat(
@@ -1512,7 +1531,7 @@ final class AnalyzerTest {
     }
     @Test
     void analyzedProducesRecursiveFunctionWithMultipleParameters() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("Munus factorial n = Sinon (n - I) (n * (factorial n - I)) I").parsed();
+        tree = new Rome77Syntax("Munus factorial n = Sinon (n - I) (n * (factorial n - I)) I").parsed();
         final Program expected = new IrProgram(
             Arrays.asList(
                 new IrFunction(
@@ -1546,13 +1565,13 @@ final class AnalyzerTest {
         );
         assertThat(
             "Analyzer should handle recursive factorial function",
-            new FakeAnalyzer(tree, expected).analyzed(),
+            new Rome77Analyzer(tree).analyzed(),
             is(equalTo(expected))
         );
     }
     @Test
     void analyzedProducesMutuallyRecursiveFunctions() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("Munus even n = Sinon n (odd n - I) I\nMunus odd n = Sinon n (even n - I) N\nGrafo even V").parsed();
+        tree = new Rome77Syntax("Munus even n = Sinon n (odd n - I) I\nMunus odd n = Sinon n (even n - I) N\nGrafo even V").parsed();
         final Program expected = new IrProgram(
             Arrays.asList(
                 new IrFunction(
@@ -1600,13 +1619,13 @@ final class AnalyzerTest {
         );
         assertThat(
             "Analyzer should handle mutually recursive functions",
-            new FakeAnalyzer(tree, expected).analyzed(),
+            new Rome77Analyzer(tree).analyzed(),
             is(equalTo(expected))
         );
     }
     @Test
     void analyzedProducesComplexArithmeticWithAllOperators() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("Grafo I + II - III * IV / V").parsed();
+        tree = new Rome77Syntax("Grafo I + II - III * IV / V").parsed();
         final Program expected = new IrProgram(
             Collections.emptyList(),
             Arrays.asList(
@@ -1633,13 +1652,13 @@ final class AnalyzerTest {
         );
         assertThat(
             "Analyzer should handle complex arithmetic with all operators",
-            new FakeAnalyzer(tree, expected).analyzed(),
+            new Rome77Analyzer(tree).analyzed(),
             is(equalTo(expected))
         );
     }
     @Test
     void analyzedProducesLargeRomanNumeral() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("Grafo MMMCMXCIX").parsed();
+        tree = new Rome77Syntax("Grafo MMMCMXCIX").parsed();
         final Program expected = new IrProgram(
             Collections.emptyList(),
             Arrays.asList(
@@ -1648,13 +1667,13 @@ final class AnalyzerTest {
         );
         assertThat(
             "Analyzer should handle large Roman numeral",
-            new FakeAnalyzer(tree, expected).analyzed(),
+            new Rome77Analyzer(tree).analyzed(),
             is(equalTo(expected))
         );
     }
     @Test
     void analyzedProducesComplexRomanNumeral() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("Grafo MDCCCLXXXVIII").parsed();
+        tree = new Rome77Syntax("Grafo MDCCCLXXXVIII").parsed();
         final Program expected = new IrProgram(
             Collections.emptyList(),
             Arrays.asList(
@@ -1663,13 +1682,13 @@ final class AnalyzerTest {
         );
         assertThat(
             "Analyzer should handle complex Roman numeral",
-            new FakeAnalyzer(tree, expected).analyzed(),
+            new Rome77Analyzer(tree).analyzed(),
             is(equalTo(expected))
         );
     }
     @Test
     void analyzedProducesMaximumNesting() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("Grafo ((((I + II) * III) - IV) / V)").parsed();
+        tree = new Rome77Syntax("Grafo ((((I + II) * III) - IV) / V)").parsed();
         final Program expected = new IrProgram(
             Collections.emptyList(),
             Arrays.asList(
@@ -1696,13 +1715,13 @@ final class AnalyzerTest {
         );
         assertThat(
             "Analyzer should handle maximum nesting of expressions",
-            new FakeAnalyzer(tree, expected).analyzed(),
+            new Rome77Analyzer(tree).analyzed(),
             is(equalTo(expected))
         );
     }
     @Test
     void analyzedProducesLongParameterList() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("Munus add5 a b c d e = a + b + c + d + e\nGrafo add5 I II III IV V").parsed();
+        tree = new Rome77Syntax("Munus add5 a b c d e = a + b + c + d + e\nGrafo add5 I II III IV V").parsed();
         final Program expected = new IrProgram(
             Arrays.asList(
                 new IrFunction(
@@ -1744,13 +1763,13 @@ final class AnalyzerTest {
         );
         assertThat(
             "Analyzer should handle long parameter list with multi-argument call",
-            new FakeAnalyzer(tree, expected).analyzed(),
+            new Rome77Analyzer(tree).analyzed(),
             is(equalTo(expected))
         );
     }
     @Test
     void analyzedProducesLongStatementSequence() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("As a = I\nAs b = II\nAs c = III\nAs d = IV\nAs e = V\nAs f = VI\nAs g = VII\nAs h = VIII\nAs i = IX\nAs j = X\nGrafo a + b + c + d + e + f + g + h + i + j").parsed();
+        tree = new Rome77Syntax("As a = I\nAs b = II\nAs c = III\nAs d = IV\nAs e = V\nAs f = VI\nAs g = VII\nAs h = VIII\nAs i = IX\nAs j = X\nGrafo a + b + c + d + e + f + g + h + i + j").parsed();
         final Program expected = new IrProgram(
             Collections.emptyList(),
             Arrays.asList(
@@ -1807,13 +1826,13 @@ final class AnalyzerTest {
         );
         assertThat(
             "Analyzer should handle long statement sequence",
-            new FakeAnalyzer(tree, expected).analyzed(),
+            new Rome77Analyzer(tree).analyzed(),
             is(equalTo(expected))
         );
     }
     @Test
     void analyzedProducesThreeParameterFunctionCall() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("Munus add3 a b c = a + b + c\nGrafo add3 I II III").parsed();
+        tree = new Rome77Syntax("Munus add3 a b c = a + b + c\nGrafo add3 I II III").parsed();
         final Program expected = new IrProgram(
             Arrays.asList(
                 new IrFunction(
@@ -1845,16 +1864,16 @@ final class AnalyzerTest {
         );
         assertThat(
             "Analyzer should handle three-parameter function with multi-argument call",
-            new FakeAnalyzer(tree, expected).analyzed(),
+            new Rome77Analyzer(tree).analyzed(),
             is(equalTo(expected))
         );
     }
     @Test
     void analyzedThrowsExceptionForTooFewArguments() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("Munus add3 a b c = a + b + c\nGrafo add3 I").parsed();
+        tree = new Rome77Syntax("Munus add3 a b c = a + b + c\nGrafo add3 I").parsed();
         final SemanticException exception = assertThrows(
             SemanticException.class,
-            () -> new FakeAnalyzer(tree, "Function add3 expects 3 arguments, got 1").analyzed(),
+            () -> new Rome77Analyzer(tree).analyzed(),
             "Analyzer should reject too few arguments"
         );
         assertThat(
@@ -1865,10 +1884,10 @@ final class AnalyzerTest {
     }
     @Test
     void analyzedThrowsExceptionForTooManyArguments() throws Exception {
-        final SyntaxTree tree = new Rome77Syntax("Munus sum a b = a + b\nGrafo sum I II III").parsed();
+        tree = new Rome77Syntax("Munus sum a b = a + b\nGrafo sum I II III").parsed();
         final SemanticException exception = assertThrows(
             SemanticException.class,
-            () -> new FakeAnalyzer(tree, "Function sum expects 2 arguments, got 3").analyzed(),
+            () -> new Rome77Analyzer(tree).analyzed(),
             "Analyzer should reject too many arguments"
         );
         assertThat(
@@ -1889,51 +1908,51 @@ final class AnalyzerTest {
      * 2. Tests already parse real syntax tree from Rome77Syntax.parsed()
      * 3. Tests will initially fail until Rome77Analyzer is implemented
      */
-    private static final class FakeAnalyzer implements Analyzer {
-
-        private final SyntaxTree tree;
-        private final Program prog;
-        private final String error;
-
-        /**
-         * Constructor for successful analysis.
-         *
-         * @param tree Syntax tree to analyze
-         * @param program Expected program result
-         */
-        FakeAnalyzer(final SyntaxTree tree, final Program program) {
-            this.tree = tree;
-            this.prog = program;
-            this.error = "";
-        }
-
-        /**
-         * Constructor for error case.
-         *
-         * @param tree Syntax tree to analyze
-         * @param errorMessage Expected error message
-         */
-        FakeAnalyzer(final SyntaxTree tree, final String errorMessage) {
-            this.tree = tree;
-            this.prog = new IrProgram(
-                Collections.emptyList(),
-                Collections.emptyList()
-            );
-            this.error = errorMessage;
-        }
-
-        /**
-         * Returns pre-configured program or throws exception.
-         *
-         * @return Program if configured for success
-         * @throws ParsingException if configured with error message
-         */
-        @Override
-        public Program analyzed() throws ParsingException {
-            if (!this.error.isEmpty()) {
-                throw new SemanticException(1, 0, this.error);
-            }
-            return this.prog;
-        }
-    }
+//    private static final class Rome77Analyzer implements Analyzer {
+//
+//        private tree;
+//        private final Program prog;
+//        private final String error;
+//
+//        /**
+//         * Constructor for successful analysis.
+//         *
+//         * @param tree Syntax tree to analyze
+//         * @param program Expected program result
+//         */
+//        Rome77Analyzer(tree, final Program program) {
+//            this.tree = tree;
+//            this.prog = program;
+//            this.error = "";
+//        }
+//
+//        /**
+//         * Constructor for error case.
+//         *
+//         * @param tree Syntax tree to analyze
+//         * @param errorMessage Expected error message
+//         */
+//        Rome77Analyzer(tree, final String errorMessage) {
+//            this.tree = tree;
+//            this.prog = new IrProgram(
+//                Collections.emptyList(),
+//                Collections.emptyList()
+//            );
+//            this.error = errorMessage;
+//        }
+//
+//        /**
+//         * Returns pre-configured program or throws exception.
+//         *
+//         * @return Program if configured for success
+//         * @throws ParsingException if configured with error message
+//         */
+//        @Override
+//        public Program analyzed() throws ParsingException {
+//            if (!this.error.isEmpty()) {
+//                throw new SemanticException(1, 0, this.error);
+//            }
+//            return this.prog;
+//        }
+//    }
 }
