@@ -176,6 +176,18 @@ final class ProgramExecutionTest {
     }
 
     @Test
+    void compiledFactorialOutputsCorrectValue() throws Exception {
+        assertThat(
+            "Factorial of X did not produce expected output",
+            this.executed("""
+                Munus fact n = Sinon (n) n * (fact n - I) I
+                Grafo fact X
+                """),
+            is(equalTo("3628800\n"))
+        );
+    }
+
+    @Test
     void compiledGcdOutputsCorrectValue() throws Exception {
         assertThat(
             "GCD of XLVIII and XVIII did not produce expected output",
