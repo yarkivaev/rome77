@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rome77 IDE</title>
+    <style>
+        body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; flex-direction: column; height: 100vh; background-color: #1e1e1e; color: #fff; }
+
+        /* Header */
+        header { padding: 10px 20px; background-color: #252526; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
+        h1 { margin: 0; font-size: 1.2rem; color: #d4d4d4; }
+
+        /* Controls */
+        .controls button {
+            background-color: #0e639c; color: white; border: none; padding: 8px 16px; cursor: pointer; font-size: 0.9rem; border-radius: 2px;
+        }
+        .controls button:hover { background-color: #1177bb; }
+        .controls button:disabled { background-color: #555; cursor: not-allowed; }
+
+        /* Main Layout */
+        #container { display: flex; flex: 1; overflow: hidden; }
+
+        /* Editor Area */
+        #editor-container { width: 60%; height: 100%; }
+
+        /* Output/Console Area */
+        #output-container {
+            width: 40%;
+            background-color: #1e1e1e;
+            border-left: 1px solid #333;
+            display: flex;
+            flex-direction: column;
+        }
+        .panel-header { padding: 5px 10px; background: #252526; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: #aaa; }
+
+        #console {
+            flex: 1;
+            padding: 10px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 14px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            color: #cccccc;
+        }
+
+        .log-error { color: #f48771; }
+        .log-success { color: #89d185; }
+        .log-info { color: #6a9955; }
+
+        /* Loading Overlay */
+        #loading { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10; justify-content: center; align-items: center; }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+
+    <!-- Load Monaco Editor from CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.34.1/min/vs/loader.min.js"></script>
+</head>
+<body>
+
+<header>
+    <h1>Rome77 Compiler IDE</h1>
+    <div class="controls">
+        <button id="runBtn" onclick="runCode()">▶ Run (Compile & Execute)</button>
+    </div>
+</header>
+
+<div id="container">
+    <div id="editor-container"></div>
+    <div id="output-container">
+        <div class="panel-header">Terminal / Output</div>
+        <div id="console"></div>
+    </div>
+</div>
+
+<div id="loading"><div class="spinner"></div></div>
+
+<script type="module" src="editor.js"></script>
+
+</body>
+</html>
