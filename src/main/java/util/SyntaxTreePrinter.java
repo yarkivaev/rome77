@@ -2,6 +2,7 @@ package util;
 
 import syntax.SyntaxNode;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class SyntaxTreePrinter {
@@ -17,7 +18,8 @@ public class SyntaxTreePrinter {
                 + (isLast ? "└── " : "├── ")
                 + "name: " + node.name() + ", text: " + node.text() + ", line: " + node.line() + ", column: " + node.column());
 
-        List<SyntaxNode> children = node.children();
+        List<SyntaxNode> children = new ArrayList<>();
+        node.children().forEach(children::add);
         for (int i = 0; i < children.size(); i++) {
             boolean last = (i == children.size() - 1);
             printTree(children.get(i),

@@ -1,7 +1,5 @@
 package syntax;
 
-import java.util.List;
-
 /**
  * Single node in the syntax tree for program representation.
  *
@@ -59,12 +57,12 @@ public interface SyntaxNode {
 
     /**
      * Returns the child nodes of this node.
-     * <p>
+     *
      * For terminal tokens, returns an empty iterable.
      * For parser rules, returns all matched child rules and tokens.
      * Children are ordered as they appear in the source.
      *
      * @return Iterable of child nodes, never null, may be empty
      */
-    List<SyntaxNode> children();
+    Iterable<SyntaxNode> children();
 }

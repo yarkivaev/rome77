@@ -101,7 +101,7 @@ public final class AntlrNode implements SyntaxNode {
     }
 
     @Override
-    public List<SyntaxNode> children() {
+    public Iterable<SyntaxNode> children() {
         final int count = this.tree.getChildCount();
         final List<SyntaxNode> nodes = new ArrayList<>(count);
         for (int idx = 0; idx < count; idx = idx + 1) {

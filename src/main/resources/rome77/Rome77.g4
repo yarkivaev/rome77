@@ -5,6 +5,10 @@
  * Arithmetic operators have higher precedence than function application,
  * so `fib n - I` parses as `fib(n - I)`.
  *
+ * Function arguments must start with a primary (identifier, literal, or
+ * parenthesized expression), which prevents `x + y` from being parsed
+ * as a function call `x(+y)`.
+ *
  * Example program:
  *   Munus fib n = Sinon n I ((fib n - I) + (fib n - II))
  *   As n = Anagnosi
@@ -50,11 +54,30 @@ outputStmt
 
 /**
  * Expression with function application.
- * Functions are called with one or more arguments: f a, f a b, f a b c
+ * Function calls use funcArg for arguments, which must start with
+ * a primary token. This ensures `x + y` is addition, not `x(+y)`.
  */
 expr
     : SINON expr expr expr                          # Conditional
+    | IDENTIFIER funcArg+                           # FuncCall
     | additive                                      # Arithmetic
+    ;
+
+/**
+ * Function argument: arithmetic expression that must start with a primary.
+ * Supports addition and subtraction within arguments.
+ * Example: `b + I` is one funcArg, parsed as `b + I`.
+ */
+funcArg
+    : funcMult ((PLUS | MINUS) funcMult)*
+    ;
+
+/**
+ * Multiplicative part of a function argument.
+ * Must start with a primary, supports multiplication and division.
+ */
+funcMult
+    : primary ((MULT | DIV) unary)*
     ;
 
 /**
@@ -69,16 +92,15 @@ additive
  * Multiplicative expressions: multiplication and division.
  */
 multiplicative
-    : multiplicative op=(MULT | DIV) application
-    | application
+    : multiplicative op=(MULT | DIV) unary          # MulDiv
+    | unary                                         # ToUnary
     ;
 
 /**
- * application prefix operators.
+ * Unary prefix operators.
  */
-application
-    : op=(PLUS | MINUS) application                 # UnaryOp
-    | primary (primary)+                            # FuncCall
+unary
+    : op=(PLUS | MINUS) unary                       # UnaryOp
     | primary                                       # ToPrimary
     ;
 
