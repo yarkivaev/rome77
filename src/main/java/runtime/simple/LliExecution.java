@@ -9,54 +9,76 @@ import runtime.Execution;
 /**
  * Executes LLVM IR by writing it to a file and running lli.
  *
- * Creates a temporary .ll file in the given directory, invokes the
- * interpreter, and returns the captured standard output.
+ * Creates a temporary .ll file, invokes the interpreter,
+ * optionally feeds standard input, and returns captured output.
  *
  * Example usage:
  * <pre>
  * String output = new LliExecution(
- *     irContent, lliPath, tempDir, 10
+ *     irContent, "42\n", lliPath, 10
  * ).output();
  * </pre>
  */
 public final class LliExecution implements Execution {
 
     private final String ir;
+    private final String input;
     private final Path interpreter;
-    private final Path directory;
     private final int timeout;
 
     /**
      * Primary constructor.
      *
      * @param ir LLVM IR source code
-     * @param interpreter Path to the lli executable
-     * @param directory Directory for temporary files
-     * @param timeout Maximum execution time in seconds
+     * @param input standard input to feed to the process
+     * @param interpreter path to the lli executable
+     * @param timeout maximum execution time in seconds
+     */
+    public LliExecution(
+        final String ir,
+        final String input,
+        final Path interpreter,
+        final int timeout
+    ) {
+        this.ir = ir;
+        this.input = input;
+        this.interpreter = interpreter;
+        this.timeout = timeout;
+    }
+
+    /**
+     * Secondary constructor without standard input.
+     *
+     * @param ir LLVM IR source code
+     * @param interpreter path to the lli executable
+     * @param timeout maximum execution time in seconds
      */
     public LliExecution(
         final String ir,
         final Path interpreter,
-        final Path directory,
         final int timeout
     ) {
-        this.ir = ir;
-        this.interpreter = interpreter;
-        this.directory = directory;
-        this.timeout = timeout;
+        this(ir, "", interpreter, timeout);
     }
 
     @Override
     public String output() throws Exception {
+        final Path directory = Files.createTempDirectory("lli");
         final Path file = Files.createTempFile(
-            this.directory, "test", ".ll"
+            directory, "test", ".ll"
         );
         Files.writeString(file, this.ir, StandardCharsets.UTF_8);
         final Process process = new ProcessBuilder(
             this.interpreter.toString(), file.toString()
-        ).directory(this.directory.toFile())
+        ).directory(directory.toFile())
             .redirectErrorStream(false)
             .start();
+        if (!this.input.isEmpty()) {
+            process.getOutputStream().write(
+                this.input.getBytes(StandardCharsets.UTF_8)
+            );
+        }
+        process.getOutputStream().close();
         final boolean finished = process.waitFor(
             this.timeout, TimeUnit.SECONDS
         );

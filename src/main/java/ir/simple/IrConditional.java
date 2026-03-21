@@ -52,6 +52,8 @@ public final class IrConditional implements Conditional {
         em = em.appended(
             cmp + " = icmp ne i64 " + condition.register() + ", 0"
         );
+        final String result = em.registered();
+        em = em.appended(result + " = alloca i64");
         final String suffix = em.registered().substring(2);
         em = em.appended(
             "br i1 " + cmp
@@ -61,21 +63,22 @@ public final class IrConditional implements Conditional {
         em = em.appended("then_" + suffix + ":");
         final Emitted thenResult = this.thenExpr.emitted(em);
         em = thenResult.emission();
+        em = em.appended(
+            "store i64 " + thenResult.register() + ", ptr " + result
+        );
         em = em.appended("br label %merge_" + suffix);
         em = em.appended("else_" + suffix + ":");
         final Emitted elseResult = this.elseExpr.emitted(em);
         em = elseResult.emission();
+        em = em.appended(
+            "store i64 " + elseResult.register() + ", ptr " + result
+        );
         em = em.appended("br label %merge_" + suffix);
         em = em.appended("merge_" + suffix + ":");
-        final String phi = em.registered();
+        final String loaded = em.registered();
         return new SimpleEmitted(
-            em.appended(
-                phi + " = phi i64 [ " + thenResult.register()
-                    + ", %then_" + suffix + " ], [ "
-                    + elseResult.register()
-                    + ", %else_" + suffix + " ]"
-            ),
-            phi
+            em.appended(loaded + " = load i64, ptr " + result),
+            loaded
         );
     }
 

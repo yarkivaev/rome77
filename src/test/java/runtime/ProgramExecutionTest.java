@@ -1,29 +1,18 @@
 package runtime;
 
 import emission.simple.SimpleEmission;
-import ir.Expression;
-import ir.Operator;
-import ir.simple.IrBinaryOp;
-import ir.simple.IrCall;
-import ir.simple.IrConditional;
-import ir.simple.IrDeclaration;
-import ir.simple.IrFunction;
-import ir.simple.IrLiteral;
-import ir.simple.IrOutput;
-import ir.simple.IrProgram;
-import ir.simple.IrUnaryOp;
-import ir.simple.IrVariable;
+import ir.Program;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
+import rome77.antlr.Rome77Syntax;
 import runtime.simple.LliExecution;
 import runtime.simple.LliPath;
 import runtime.simple.StrippedCombination;
+import semantic.Rome77Analyzer;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -36,7 +25,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 
 /**
- * Integration tests that build IR programs, emit LLVM IR, and execute
+ * End-to-end tests that compile Rome77 source code and execute
  * via lli to verify correct runtime output.
  *
  * Tests are skipped if lli is not available on the system.
@@ -49,303 +38,176 @@ import static org.hamcrest.Matchers.is;
 final class ProgramExecutionTest {
 
     @Test
-    void emittedLiteralOutputsCorrectValue() throws Exception {
+    void compiledLiteralOutputsCorrectValue() throws Exception {
         assertThat(
-            "Literal 42 did not produce expected output",
-            this.executed(
-                new IrProgram(
-                    Collections.emptyList(),
-                    List.of(new IrOutput(new IrLiteral(42)))
-                )
-            ),
+            "Literal XLII did not produce expected output",
+            this.executed("Grafo XLII"),
             is(equalTo("42\n"))
         );
     }
 
     @Test
-    void emittedNegationOutputsCorrectValue() throws Exception {
+    void compiledNegationOutputsCorrectValue() throws Exception {
         assertThat(
-            "Negation of 7 did not produce expected output",
-            this.executed(
-                new IrProgram(
-                    Collections.emptyList(),
-                    List.of(
-                        new IrOutput(
-                            new IrUnaryOp(Operator.SUB, new IrLiteral(7))
-                        )
-                    )
-                )
-            ),
+            "Negation of VII did not produce expected output",
+            this.executed("Grafo -VII"),
             is(equalTo("-7\n"))
         );
     }
 
     @Test
-    void emittedAdditionOutputsCorrectValue() throws Exception {
+    void compiledAdditionOutputsCorrectValue() throws Exception {
         assertThat(
-            "Addition of 3 and 5 did not produce expected output",
-            this.executed(
-                new IrProgram(
-                    Collections.emptyList(),
-                    List.of(
-                        new IrOutput(
-                            new IrBinaryOp(
-                                Operator.ADD,
-                                new IrLiteral(3),
-                                new IrLiteral(5)
-                            )
-                        )
-                    )
-                )
-            ),
+            "Addition of III and V did not produce expected output",
+            this.executed("Grafo III + V"),
             is(equalTo("8\n"))
         );
     }
 
     @Test
-    void emittedSubtractionOutputsCorrectValue() throws Exception {
+    void compiledSubtractionOutputsCorrectValue() throws Exception {
         assertThat(
-            "Subtraction of 3 from 10 did not produce expected output",
-            this.executed(
-                new IrProgram(
-                    Collections.emptyList(),
-                    List.of(
-                        new IrOutput(
-                            new IrBinaryOp(
-                                Operator.SUB,
-                                new IrLiteral(10),
-                                new IrLiteral(3)
-                            )
-                        )
-                    )
-                )
-            ),
+            "Subtraction of III from X did not produce expected output",
+            this.executed("Grafo X - III"),
             is(equalTo("7\n"))
         );
     }
 
     @Test
-    void emittedMultiplicationOutputsCorrectValue() throws Exception {
+    void compiledMultiplicationOutputsCorrectValue() throws Exception {
         assertThat(
-            "Multiplication of 6 and 7 did not produce expected output",
-            this.executed(
-                new IrProgram(
-                    Collections.emptyList(),
-                    List.of(
-                        new IrOutput(
-                            new IrBinaryOp(
-                                Operator.MUL,
-                                new IrLiteral(6),
-                                new IrLiteral(7)
-                            )
-                        )
-                    )
-                )
-            ),
+            "Multiplication of VI and VII did not produce expected output",
+            this.executed("Grafo VI * VII"),
             is(equalTo("42\n"))
         );
     }
 
     @Test
-    void emittedDivisionOutputsCorrectValue() throws Exception {
+    void compiledDivisionOutputsCorrectValue() throws Exception {
         assertThat(
-            "Division of 15 by 3 did not produce expected output",
-            this.executed(
-                new IrProgram(
-                    Collections.emptyList(),
-                    List.of(
-                        new IrOutput(
-                            new IrBinaryOp(
-                                Operator.DIV,
-                                new IrLiteral(15),
-                                new IrLiteral(3)
-                            )
-                        )
-                    )
-                )
-            ),
+            "Division of XV by III did not produce expected output",
+            this.executed("Grafo XV / III"),
             is(equalTo("5\n"))
         );
     }
 
     @Test
-    void emittedVariableOutputsCorrectValue() throws Exception {
+    void compiledVariableOutputsCorrectValue() throws Exception {
         assertThat(
-            "Variable with value 99 did not produce expected output",
-            this.executed(
-                new IrProgram(
-                    Collections.emptyList(),
-                    List.of(
-                        new IrDeclaration("x", new IrLiteral(99)),
-                        new IrOutput(new IrVariable("x"))
-                    )
-                )
-            ),
+            "Variable with value XCIX did not produce expected output",
+            this.executed("As x = XCIX\nGrafo x"),
             is(equalTo("99\n"))
         );
     }
 
     @Test
-    void emittedFunctionCallOutputsCorrectValue() throws Exception {
+    void compiledFunctionCallOutputsCorrectValue() throws Exception {
         assertThat(
-            "Function returning 77 did not produce expected output",
+            "Function returning LXXVII did not produce expected output",
             this.executed(
-                new IrProgram(
-                    List.of(
-                        new IrFunction(
-                            "constant",
-                            Collections.emptyList(),
-                            new IrLiteral(77)
-                        )
-                    ),
-                    List.of(
-                        new IrOutput(
-                            new IrCall(
-                                "constant",
-                                Collections.<Expression>emptyList()
-                            )
-                        )
-                    )
-                )
+                "Munus constant n = LXXVII\nGrafo constant I"
             ),
             is(equalTo("77\n"))
         );
     }
 
     @Test
-    void emittedParameterizedFunctionOutputsCorrectValue() throws Exception {
+    void compiledParameterizedFunctionOutputsCorrectValue() throws Exception {
         assertThat(
-            "Function doubling 21 did not produce expected output",
+            "Function doubling XXI did not produce expected output",
             this.executed(
-                new IrProgram(
-                    List.of(
-                        new IrFunction(
-                            "doubled",
-                            List.of("n"),
-                            new IrBinaryOp(
-                                Operator.ADD,
-                                new IrVariable("n"),
-                                new IrVariable("n")
-                            )
-                        )
-                    ),
-                    List.of(
-                        new IrOutput(
-                            new IrCall(
-                                "doubled",
-                                List.<Expression>of(new IrLiteral(21))
-                            )
-                        )
-                    )
-                )
+                "Munus doubled n = n + n\nGrafo doubled XXI"
             ),
             is(equalTo("42\n"))
         );
     }
 
     @Test
-    void emittedConditionalTrueOutputsCorrectValue() throws Exception {
+    void compiledConditionalTrueOutputsCorrectValue() throws Exception {
         assertThat(
             "Conditional with true condition did not produce expected output",
-            this.executed(
-                new IrProgram(
-                    Collections.emptyList(),
-                    List.of(
-                        new IrOutput(
-                            new IrConditional(
-                                new IrLiteral(1),
-                                new IrLiteral(10),
-                                new IrLiteral(20)
-                            )
-                        )
-                    )
-                )
-            ),
+            this.executed("Grafo Sinon I X XX"),
             is(equalTo("10\n"))
         );
     }
 
     @Test
-    void emittedConditionalFalseOutputsCorrectValue() throws Exception {
+    void compiledConditionalFalseOutputsCorrectValue() throws Exception {
         assertThat(
             "Conditional with false condition did not produce expected output",
-            this.executed(
-                new IrProgram(
-                    Collections.emptyList(),
-                    List.of(
-                        new IrOutput(
-                            new IrConditional(
-                                new IrLiteral(0),
-                                new IrLiteral(10),
-                                new IrLiteral(20)
-                            )
-                        )
-                    )
-                )
-            ),
+            this.executed("Grafo Sinon N X XX"),
             is(equalTo("20\n"))
         );
     }
 
     @Test
-    void emittedNestedArithmeticOutputsCorrectValue() throws Exception {
+    void compiledNestedArithmeticOutputsCorrectValue() throws Exception {
         assertThat(
-            "Nested arithmetic (2+3)*4 did not produce expected output",
-            this.executed(
-                new IrProgram(
-                    Collections.emptyList(),
-                    List.of(
-                        new IrOutput(
-                            new IrBinaryOp(
-                                Operator.MUL,
-                                new IrBinaryOp(
-                                    Operator.ADD,
-                                    new IrLiteral(2),
-                                    new IrLiteral(3)
-                                ),
-                                new IrLiteral(4)
-                            )
-                        )
-                    )
-                )
-            ),
+            "Nested arithmetic (II+III)*IV did not produce expected output",
+            this.executed("Grafo (II + III) * IV"),
             is(equalTo("20\n"))
         );
     }
 
     @Test
-    void emittedMultipleOutputsProduceCorrectValues() throws Exception {
+    void compiledMultipleOutputsProduceCorrectValues() throws Exception {
         assertThat(
             "Multiple outputs did not produce expected values",
-            this.executed(
-                new IrProgram(
-                    Collections.emptyList(),
-                    List.of(
-                        new IrOutput(new IrLiteral(42)),
-                        new IrOutput(new IrLiteral(99))
-                    )
-                )
-            ),
+            this.executed("Grafo XLII\nGrafo XCIX"),
             is(equalTo("42\n99\n"))
         );
     }
 
     @Test
-    void emittedIsThreadSafe() throws Exception {
+    void compiledBinarySearchSqrtOutputsCorrectValue() throws Exception {
+        assertThat(
+            "Integer square root of C did not produce expected output",
+            this.executed("""
+                Munus mid lo hi = (lo + hi + I) / II
+                Munus search lo hi n = Sinon (hi - lo) \
+                    (Sinon ((mid lo hi) * (mid lo hi) / (n + I)) \
+                        (search lo ((mid lo hi) - I) n) \
+                        (search (mid lo hi) hi n)) \
+                    lo
+                Grafo search I C C
+                """),
+            is(equalTo("10\n"))
+        );
+    }
+
+    @Test
+    void compiledGcdOutputsCorrectValue() throws Exception {
+        assertThat(
+            "GCD of XLVIII and XVIII did not produce expected output",
+            this.executed("""
+                Munus mod a b = a - (a / b) * b
+                Munus gcd a b = Sinon b (gcd b (mod a b)) a
+                Grafo gcd XLVIII XVIII
+                """),
+            is(equalTo("6\n"))
+        );
+    }
+
+    @Test
+    void compiledStdinOutputsCorrectValue() throws Exception {
+        assertThat(
+            "Stdin read and doubled did not produce expected output",
+            this.executed(
+                """
+                As x = Anagnosi
+                Grafo x + x
+                """,
+                "21\n"
+            ),
+            is(equalTo("42\n"))
+        );
+    }
+
+    @Test
+    void compiledIsThreadSafe() throws Exception {
         final Path lli = this.lli();
         final String rt = this.runtime();
-        final IrProgram program = new IrProgram(
-            Collections.emptyList(),
-            List.of(new IrOutput(new IrLiteral(42)))
-        );
-        final String ir = new StrippedCombination(
-            rt,
-            new String(
-                program.emitted(new SimpleEmission())
-                    .result().readAllBytes(),
-                StandardCharsets.UTF_8
-            )
-        ).combined();
+        final String ir = this.compiled("Grafo XLII", rt);
         final int threads = 8;
         final CountDownLatch latch = new CountDownLatch(threads);
         final AtomicBoolean failed = new AtomicBoolean(false);
@@ -353,11 +215,8 @@ final class ProgramExecutionTest {
         for (int idx = 0; idx < threads; idx++) {
             pool.submit(() -> {
                 try {
-                    final Path directory = Files.createTempDirectory(
-                        "lli-thread"
-                    );
                     final String result = new LliExecution(
-                        ir, lli, directory, 10
+                        ir, lli, 10
                     ).output();
                     if (!"42\n".equals(result)) {
                         failed.set(true);
@@ -380,31 +239,64 @@ final class ProgramExecutionTest {
     }
 
     /**
-     * Emits, combines, and executes an IR program via lli.
+     * Compiles and executes a Rome77 source program via lli.
      *
-     * @param program IR program to execute
-     * @return Standard output from execution
-     * @throws Exception if emission or execution fails
+     * @param source Rome77 source code
+     * @return standard output from execution
+     * @throws Exception if compilation or execution fails
      */
-    private String executed(final IrProgram program) throws Exception {
+    private String executed(final String source) throws Exception {
         final Path lli = this.lli();
         final String rt = this.runtime();
+        final String ir = this.compiled(source, rt);
+        return new LliExecution(ir, lli, 10).output();
+    }
+
+    /**
+     * Compiles and executes a Rome77 source program with stdin via lli.
+     *
+     * @param source Rome77 source code
+     * @param input standard input to feed
+     * @return standard output from execution
+     * @throws Exception if compilation or execution fails
+     */
+    private String executed(
+        final String source,
+        final String input
+    ) throws Exception {
+        final Path lli = this.lli();
+        final String rt = this.runtime();
+        final String ir = this.compiled(source, rt);
+        return new LliExecution(ir, input, lli, 10).output();
+    }
+
+    /**
+     * Compiles Rome77 source into combined LLVM IR ready for execution.
+     *
+     * @param source Rome77 source code
+     * @param rt runtime LLVM IR
+     * @return combined LLVM IR
+     * @throws Exception if parsing, analysis, or emission fails
+     */
+    private String compiled(
+        final String source,
+        final String rt
+    ) throws Exception {
+        final Program program = new Rome77Analyzer(
+            new Rome77Syntax(source).parsed()
+        ).analyzed();
         final String emitted = new String(
             program.emitted(new SimpleEmission())
                 .result().readAllBytes(),
             StandardCharsets.UTF_8
         );
-        final String ir = new StrippedCombination(
-            rt, emitted
-        ).combined();
-        final Path directory = Files.createTempDirectory("lli-test");
-        return new LliExecution(ir, lli, directory, 10).output();
+        return new StrippedCombination(rt, emitted).combined();
     }
 
     /**
      * Resolves the lli path or skips the test.
      *
-     * @return Path to the lli executable
+     * @return path to the lli executable
      */
     private Path lli() {
         try {
@@ -427,7 +319,7 @@ final class ProgramExecutionTest {
     /**
      * Loads the runtime LLVM IR from resources.
      *
-     * @return Runtime IR content
+     * @return runtime IR content
      * @throws IOException if reading fails
      */
     private String runtime() throws IOException {
