@@ -10,25 +10,9 @@ require(['vs/editor/editor.main'], function() {
             lineComment: '//',
             blockComment: ['/*', '*/']
         },
-        brackets: [
-            ['{', '}'],
-            ['(', ')'],
-            ['[', ']']
-        ],
-        autoClosingPairs: [
-            { open: '{', close: '}' },
-            { open: '(', close: ')' },
-            { open: '[', close: ']' },
-            { open: '"', close: '"', notIn: ['string', 'comment'] },
-            { open: "'", close: "'", notIn: ['string', 'comment'] }
-        ],
-        surroundingPairs: [
-            { open: '{', close: '}' },
-            { open: '(', close: ')' },
-            { open: '[', close: ']' },
-            { open: '"', close: '"' },
-            { open: "'", close: "'" }
-        ],
+        brackets: [['(', ')']],
+        autoClosingPairs: [{ open: '(', close: ')' }],
+        surroundingPairs: [{ open: '(', close: ')' }],
         folding: {
             markers: {
                 start: new RegExp("^\\s*//\\s*#?region\\b"),
