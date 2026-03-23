@@ -31,28 +31,28 @@ import java.util.List;
 public final class Rome77Compilation implements Compilation {
 
     private final String source;
+    private final String input;
     private final String runtime;
-    private final List<Path> candidates;
-    private final int timeout;
+    private final Endpoint endpoint;
 
     /**
      * Primary constructor.
      *
      * @param source Rome77 source code to compile
+     * @param input stdin payload for execution
      * @param runtime LLVM IR runtime definitions
-     * @param candidates ordered list of candidate lli paths
-     * @param timeout execution timeout in seconds
+     * @param endpoint execution endpoint configuration
      */
     public Rome77Compilation(
         final String source,
+        final String input,
         final String runtime,
-        final List<Path> candidates,
-        final int timeout
+        final Endpoint endpoint
     ) {
         this.source = source;
+        this.input = input;
         this.runtime = runtime;
-        this.candidates = List.copyOf(candidates);
-        this.timeout = timeout;
+        this.endpoint = endpoint;
     }
 
     @Override
@@ -89,7 +89,7 @@ public final class Rome77Compilation implements Compilation {
         ).combined();
         final Path lli;
         try {
-            lli = new LliPath(this.candidates).resolved();
+            lli = new LliPath(this.endpoint.candidates()).resolved();
         } catch (final IllegalStateException exception) {
             return new CompileResponse(
                 "",
@@ -99,7 +99,7 @@ public final class Rome77Compilation implements Compilation {
         }
         try {
             final String output = new LliExecution(
-                ir, lli, this.timeout
+                ir, this.input, lli, this.endpoint.timeout()
             ).output();
             return new CompileResponse(
                 output, "", Collections.emptyList()

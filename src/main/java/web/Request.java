@@ -9,6 +9,7 @@ package web;
  * <pre>
  * Request request = new GsonRequest(inputStream);
  * String source = request.source();
+ * String input = request.input();
  * </pre>
  */
 public interface Request {
@@ -19,4 +20,11 @@ public interface Request {
      * @return source code string
      */
     String source();
+
+    /**
+     * Returns the stdin payload for program execution.
+     *
+     * @return stdin input string
+     */
+    String input();
 }

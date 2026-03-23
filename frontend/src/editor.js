@@ -96,6 +96,7 @@ require(['vs/editor/editor.main'], function() {
 
 async function runCode() {
     const code = window.editorInstance.getValue();
+    const input = document.getElementById('stdin').value;
     const consoleDiv = document.getElementById('console');
     const loading = document.getElementById('loading');
     const btn = document.getElementById('runBtn');
@@ -113,7 +114,7 @@ async function runCode() {
         const response = await fetch('/compile', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ source: code })
+            body: JSON.stringify({ source: code, input })
         });
 
         if (!response.ok) throw new Error(`Server returned ${response.status}`);

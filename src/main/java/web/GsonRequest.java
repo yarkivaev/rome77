@@ -21,14 +21,17 @@ import java.nio.charset.StandardCharsets;
 public final class GsonRequest implements Request {
 
     private final String code;
+    private final String input;
 
     /**
      * Primary constructor.
      *
      * @param code Rome77 source code
+     * @param input stdin payload
      */
-    public GsonRequest(final String code) {
+    public GsonRequest(final String code, final String input) {
         this.code = code;
+        this.input = input;
     }
 
     /**
@@ -37,15 +40,22 @@ public final class GsonRequest implements Request {
      * @param stream JSON input containing "source" field
      */
     public GsonRequest(final InputStream stream) {
-        this(
-            JsonParser.parseReader(
-                new InputStreamReader(stream, StandardCharsets.UTF_8)
-            ).getAsJsonObject().get("source").getAsString()
-        );
+        final JsonObject payload = JsonParser.parseReader(
+            new InputStreamReader(stream, StandardCharsets.UTF_8)
+        ).getAsJsonObject();
+        this.code = payload.get("source").getAsString();
+        this.input = payload.has("input")
+            ? payload.get("input").getAsString()
+            : "";
     }
 
     @Override
     public String source() {
         return this.code;
+    }
+
+    @Override
+    public String input() {
+        return this.input;
     }
 }

@@ -25,8 +25,7 @@ import java.util.List;
 public final class CompileExchange implements HttpHandler {
 
     private final String runtime;
-    private final List<Path> candidates;
-    private final int timeout;
+    private final Endpoint endpoint;
 
     /**
      * Primary constructor.
@@ -41,8 +40,7 @@ public final class CompileExchange implements HttpHandler {
         final int timeout
     ) {
         this.runtime = runtime;
-        this.candidates = List.copyOf(candidates);
-        this.timeout = timeout;
+        this.endpoint = new LliEndpoint(candidates, timeout);
     }
 
     @Override
@@ -50,11 +48,12 @@ public final class CompileExchange implements HttpHandler {
         exchange.getResponseHeaders().add(
             "Content-Type", "application/json"
         );
-        final String source = new GsonRequest(
-            exchange.getRequestBody()
-        ).source();
+        final Request request = new GsonRequest(exchange.getRequestBody());
         final String json = new Rome77Compilation(
-            source, this.runtime, this.candidates, this.timeout
+            request.source(),
+            request.input(),
+            this.runtime,
+            this.endpoint
         ).response().json();
         final byte[] bytes = json.getBytes(StandardCharsets.UTF_8);
         exchange.sendResponseHeaders(200, bytes.length);
